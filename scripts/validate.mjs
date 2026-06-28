@@ -10,12 +10,13 @@ import { fileURLToPath } from "node:url";
 import { tmpdir } from "node:os";
 
 import { listTemplates, readManifest, stampTemplate } from "./new-site.mjs";
+import { buildCatalog, serializeCatalog } from "./build-catalog.mjs";
 
 const ROOT = resolve(dirname(fileURLToPath(import.meta.url)), "..");
 const TEMPLATES_DIR = join(ROOT, "templates");
 
 const TIERS = new Set(["static", "ssg", "spa", "data", "native"]);
-const REQUIRED_FIELDS = ["name", "title", "tagline", "description", "framework", "tier", "language", "needsBuild", "output", "basePathMechanism", "deploy", "tags", "order"];
+const REQUIRED_FIELDS = ["name", "title", "tagline", "description", "framework", "tier", "language", "needsBuild", "output", "basePathMechanism", "deploy", "tags", "features", "order"];
 const SENTINELS = ["__SITE_NAME__", "__SITE_URL__", "__SITE_ORIGIN__", "__BASE_PATH__", "__BASE_URL__", "__REPO_SLUG__", "__PKG_NAME__"];
 
 const UNIVERSAL = ["permissions:", "pages: write", "id-token: write", "concurrency:", "group: pages", "actions/deploy-pages@", "name: github-pages"];
@@ -92,6 +93,43 @@ try {
   }
 } finally {
   rmSync(work, { recursive: true, force: true });
+}
+
+// catalog builder: every template, sorted, with a non-empty features[]
+const catalog = buildCatalog();
+test("buildCatalog includes every template", () => {
+  assert.equal(catalog.length, names.length);
+});
+test("buildCatalog is serializable and sorted by order", () => {
+  const s = serializeCatalog(catalog);
+  assert.equal(JSON.parse(s).length, names.length);
+  const orders = catalog.map((t) => t.order);
+  assert.deepEqual(orders, [...orders].sort((a, b) => a - b));
+});
+test("every template documents features for the gallery", () => {
+  for (const t of catalog) {
+    assert.ok(Array.isArray(t.features) && t.features.length > 0, `${t.name} has no features[]`);
+  }
+});
+
+// build-site assembler: a static-tier template stamps with the preview base and
+// carries the GitHub source link (the static-copy path build-site publishes).
+const swork = mkdtempSync(join(tmpdir(), "ghp-buildsite-"));
+try {
+  test("static preview stamps at a nested base with a source link", () => {
+    const { dir } = stampTemplate({
+      template: "static-html",
+      dir: join(swork, "static-html"),
+      repo: "jongio/gh-pages-templates",
+      base: "/gh-pages-templates/preview/static-html/",
+      force: true,
+    });
+    const html = readFileSync(join(dir, "index.html"), "utf8");
+    assert.ok(html.includes("github.com/jongio/gh-pages-templates"), "missing source link");
+    assert.ok(html.includes("theme-toggle"), "missing theme toggle");
+  });
+} finally {
+  rmSync(swork, { recursive: true, force: true });
 }
 
 console.log(`\n${passed} checks passed`);
