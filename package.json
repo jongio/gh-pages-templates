@@ -1,0 +1,14 @@
+{
+  "name": "gh-pages-templates",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "description": "A registry of ready-to-deploy GitHub Pages starter templates, with a browsable gallery (live previews) deployed to Pages.",
+  "license": "MIT",
+  "scripts": {
+    "build": "node scripts/build-site.mjs",
+    "validate": "node scripts/validate.mjs",
+    "test": "node scripts/validate.mjs",
+    "new": "node scripts/new-site.mjs"
+  }
+}
