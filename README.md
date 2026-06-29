@@ -54,13 +54,13 @@ The site lives in **`site/`** — a single, committed source folder you edit dir
 `index.html`, `assets/`, and `templates.json` (the catalog). It uses relative links,
 so it's base-path-proof and you can open it as-is.
 
-The only build artifact is the **live previews**. `scripts/build-site.mjs` stamps
-each template through the generator at the preview base path, builds it, and writes
-the result into **`site/preview/<name>/`** — which is **gitignored**. You never
-commit build output; CI rebuilds the previews on every deploy.
+`scripts/build-site.mjs` regenerates the two derived pieces: it rewrites
+`site/templates.json` from the template manifests, and builds a live preview of each
+template into **`site/preview/<name>/`** — which is **gitignored**. You never commit
+the previews; CI runs this on every deploy.
 
 ```sh
-# Build the previews into site/preview (Jekyll needs Ruby), then serve:
+# Regenerate the catalog + build previews (Jekyll needs Ruby), then serve:
 node scripts/build-site.mjs
 npx serve site
 ```
@@ -71,7 +71,8 @@ Set `PAGES_BASE` to preview at a non-root base (CI does this automatically):
 PAGES_BASE="/gh-pages-templates/" node scripts/build-site.mjs
 ```
 
-When you add or edit a template manifest, regenerate the committed catalog:
+If you only changed a manifest and just want to refresh the committed catalog
+(without building previews):
 
 ```sh
 node scripts/build-catalog.mjs   # writes site/templates.json
@@ -83,9 +84,10 @@ This repo deploys its own site to GitHub Pages:
 
 1. Push to `main`.
 2. **Settings → Pages → Source → GitHub Actions**.
-3. `.github/workflows/deploy.yml` checks out `site/`, builds the live previews into
-   `site/preview/` (Ruby is set up for the Jekyll preview), and publishes `site/`.
-   The live URL appears in the Actions run.
+3. `.github/workflows/deploy.yml` checks out `site/`, runs `build-site.mjs` to
+   regenerate the catalog and build the live previews into `site/preview/` (Ruby is
+   set up for the Jekyll preview), and publishes `site/`. The live URL appears in
+   the Actions run.
 
 ## Validate / contribute
 
@@ -111,7 +113,7 @@ site/                      The site — committed source you edit + deploy
 scripts/
   new-site.mjs             Generator — stamp a site, inject the base path
   build-catalog.mjs        Write site/templates.json from manifests
-  build-site.mjs           Build live previews into site/preview/
+  build-site.mjs           Regenerate catalog + build previews into site/preview/
   validate.mjs             CI gate (manifests + workflows + stamp + catalog sync)
 .github/workflows/
   deploy.yml               Build previews + deploy site/ to Pages

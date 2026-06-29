@@ -1,11 +1,13 @@
 #!/usr/bin/env node
-// build-site.mjs — build the LIVE PREVIEWS for the site.
+// build-site.mjs — build the generated parts of the site (catalog + live previews).
 //
-// The site shell (index.html, assets/, templates.json) is committed source under
-// ./site and deploys as-is. This script only (re)builds the per-template previews
-// into ./site/preview/<name>/ — a gitignored build artifact. For each template it
-// stamps it through the generator with the preview base path, builds it, and
-// copies the output into site/preview/<name>/.
+// The site shell (index.html, assets/) is committed source under ./site and
+// deploys as-is. This script regenerates the two derived pieces:
+//   1. site/templates.json — the catalog, rebuilt from the template manifests so
+//      the deployed catalog is always fresh (committed for local dev; CI rebuilds it).
+//   2. site/preview/<name>/ — a live preview of each template (gitignored build
+//      artifact). Each template is stamped through the generator at the preview
+//      base path, built, and copied into site/preview/<name>/.
 //
 // Previews need the real base, taken from PAGES_BASE (e.g. "/gh-pages-templates/");
 // defaults to "/" for local runs.  Usage:  node scripts/build-site.mjs
@@ -13,14 +15,14 @@
 // Previews that need a toolchain that isn't installed (e.g. Ruby for Jekyll) are
 // skipped gracefully; the card still links to where the preview will be in CI.
 
-import { existsSync, rmSync, mkdirSync, cpSync, mkdtempSync } from "node:fs";
+import { existsSync, rmSync, mkdirSync, cpSync, writeFileSync, mkdtempSync } from "node:fs";
 import { join, resolve, dirname, basename } from "node:path";
 import { fileURLToPath } from "node:url";
 import { tmpdir } from "node:os";
 import { spawnSync } from "node:child_process";
 
 import { stampTemplate, normalizeBase } from "./new-site.mjs";
-import { buildCatalog } from "./build-catalog.mjs";
+import { buildCatalog, serializeCatalog } from "./build-catalog.mjs";
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const ROOT = resolve(__dirname, "..");
@@ -106,15 +108,19 @@ function buildPreview(template, manifest) {
 }
 
 function main() {
-  console.log(`Building previews (base ${PAGES_BASE}, repo ${REPO})`);
+  console.log(`Building site (base ${PAGES_BASE}, repo ${REPO})`);
 
-  // Rebuild only the previews; the committed site shell is left untouched.
+  // 1. Regenerate the catalog from the manifests so the deployed site is fresh.
+  const catalog = buildCatalog();
+  writeFileSync(join(SITE, "templates.json"), serializeCatalog(catalog));
+  console.log(`Catalog: site/templates.json (${catalog.length} templates)`);
+
+  // 2. Rebuild only the previews; the committed site shell is left untouched.
   const previewRoot = join(SITE, "preview");
   rmSync(previewRoot, { recursive: true, force: true });
   mkdirSync(previewRoot, { recursive: true });
 
   console.log("Previews:");
-  const catalog = buildCatalog();
   const built = catalog.filter((t) => buildPreview(t.name, t)).map((t) => t.name);
 
   console.log(`\nsite/preview ready — ${built.length}/${catalog.length} live previews: ${built.join(", ") || "(none)"}`);
