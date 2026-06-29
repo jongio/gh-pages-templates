@@ -35,7 +35,7 @@ jobs:
       - name: Configure Pages
         id: pages
         uses: actions/configure-pages@v5
-      - name: Build site (gallery + live previews)
+      - name: Build site (catalog + live previews)
         env:
           # configure-pages emits the project base path (e.g. /gh-pages-templates)
           PAGES_BASE: ${{ steps.pages.outputs.base_path }}
