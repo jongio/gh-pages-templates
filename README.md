@@ -8,7 +8,7 @@ correct **base-path** setup, so it deploys correctly to a user site (`/`) or a
 project site (`/repo/`) with no fiddling.
 
 > Browse the gallery: **https://jongio.github.io/gh-pages-templates/** *(after
-> the first deploy — see [Deploy the gallery](#deploy-the-gallery))*.
+> the first deploy — see [Deploy the site](#deploy-the-site))*.
 
 ## Templates
 
@@ -48,36 +48,44 @@ node scripts/new-site.mjs astro --repo octocat/blog --registry jongio/gh-pages-t
 
 Then push to `main` and set **Settings → Pages → Source → GitHub Actions**.
 
-## The gallery + live previews
+## The site + live previews
 
-The gallery (`gallery/`) is a static site that lists every template. The build
-script stamps each template through the generator with the gallery's base path,
-**builds it**, and serves the result at `preview/<name>/`, so each card links to a
-live, working demo.
+The site lives in **`site/`** — a single, committed source folder you edit directly:
+`index.html`, `assets/`, and `templates.json` (the catalog). It uses relative links,
+so it's base-path-proof and you can open it as-is.
 
-Build it locally:
+The only build artifact is the **live previews**. `scripts/build-site.mjs` stamps
+each template through the generator at the preview base path, builds it, and writes
+the result into **`site/preview/<name>/`** — which is **gitignored**. You never
+commit build output; CI rebuilds the previews on every deploy.
 
 ```sh
-# Live previews for the JS/static templates (Jekyll needs Ruby):
+# Build the previews into site/preview (Jekyll needs Ruby), then serve:
 node scripts/build-site.mjs
 npx serve site
 ```
 
-`site/` is the deployable output (gallery shell + `templates.json` + `preview/*`).
 Set `PAGES_BASE` to preview at a non-root base (CI does this automatically):
 
 ```sh
 PAGES_BASE="/gh-pages-templates/" node scripts/build-site.mjs
 ```
 
-## Deploy the gallery
+When you add or edit a template manifest, regenerate the committed catalog:
 
-This repo deploys its own gallery to GitHub Pages:
+```sh
+node scripts/build-catalog.mjs   # writes site/templates.json
+```
+
+## Deploy the site
+
+This repo deploys its own site to GitHub Pages:
 
 1. Push to `main`.
 2. **Settings → Pages → Source → GitHub Actions**.
-3. `.github/workflows/deploy.yml` builds the gallery (with previews; Ruby is set up
-   for the Jekyll preview) and publishes it. The live URL appears in the Actions run.
+3. `.github/workflows/deploy.yml` checks out `site/`, builds the live previews into
+   `site/preview/` (Ruby is set up for the Jekyll preview), and publishes `site/`.
+   The live URL appears in the Actions run.
 
 ## Validate / contribute
 
@@ -94,16 +102,19 @@ via the generator's sentinels — see [`CONTRIBUTING.md`](CONTRIBUTING.md). CI
 
 ```
 templates/<name>/          Registry source (with __SENTINEL__ placeholders)
-  template.json            Manifest (gallery + generator read this)
+  template.json            Manifest (site catalog + generator read this)
   .github/workflows/deploy.yml
-gallery/                   Browse UI (static; copied into site/ at build)
+site/                      The site — committed source you edit + deploy
+  index.html  assets/      Browse UI (static, base-path-proof)
+  templates.json           Catalog (generated from manifests by build-catalog.mjs)
+  preview/                 Live template previews (gitignored; built by build-site.mjs)
 scripts/
   new-site.mjs             Generator — stamp a site, inject the base path
-  build-catalog.mjs        Catalog from manifests (library)
-  build-site.mjs           Assemble site/ = gallery + catalog + live previews
-  validate.mjs             CI gate (manifests + workflows + stamp)
+  build-catalog.mjs        Write site/templates.json from manifests
+  build-site.mjs           Build live previews into site/preview/
+  validate.mjs             CI gate (manifests + workflows + stamp + catalog sync)
 .github/workflows/
-  deploy.yml               Build + deploy the gallery to Pages
+  deploy.yml               Build previews + deploy site/ to Pages
   validate.yml             Validate templates on push/PR
 ```
 

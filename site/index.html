@@ -18,7 +18,7 @@
         } catch (e) {}
       })();
     </script>
-    <!-- Relative links — the gallery itself is base-path-proof. -->
+    <!-- Relative links — the site itself is base-path-proof. -->
     <link rel="stylesheet" href="./assets/styles.css" />
   </head>
   <body>
@@ -97,18 +97,17 @@ copilot plugin install create-gh-pages-site@jongio-skills</code></pre>
           <li>
             <strong>With Copilot</strong> — invoke <code>/create-gh-pages-site</code>
             with the prompt shown on each card, e.g.
-            <em>"an Astro site for octocat/blog"</em>. Leave out the framework or the
-            repo and the skill will interview you before scaffolding.
-          </li>
-          <li>
-            <strong>With the generator</strong> (no agent) —
-            <code>node scripts/new-site.mjs &lt;template&gt; --repo &lt;owner/name&gt;</code>,
-            or from anywhere with <code>--registry jongio/gh-pages-templates</code>.
+            <em>"an Astro site"</em>. It uses the current repo by default and asks
+            for the framework or repo only if it's unclear.
           </li>
           <li>
             Push to <code>main</code>, then set
             <strong>Settings → Pages → Source → GitHub Actions</strong>. The deploy
             workflow publishes on every push; the live URL appears in the Actions run.
+          </li>
+          <li>
+            The skill points the repo's <strong>Website</strong> link at the Pages
+            URL for you — same as ticking <em>"Use your GitHub Pages website"</em>.
           </li>
         </ol>
       </section>
@@ -122,7 +121,7 @@ copilot plugin install create-gh-pages-site@jongio-skills</code></pre>
         <ul>
           <li>a <code>template.json</code> manifest (title, tier, framework, base-path mechanism, tags);</li>
           <li>a <code>.github/workflows/deploy.yml</code> using the official GitHub Pages actions;</li>
-          <li>base-path handling via the generator's <code>__BASE_PATH__</code> / <code>__BASE_URL__</code> sentinels;</li>
+          <li>base-path handling via the <code>__BASE_PATH__</code> / <code>__BASE_URL__</code> sentinels;</li>
           <li>a short <code>README.md</code>.</li>
         </ul>
         <ol>

@@ -1,5 +1,6 @@
-// Renders the template catalog from ./templates.json (built by build-site.mjs),
-// with search, type filters, a decision wizard, and live previews. No build.
+// Renders the template catalog from ./templates.json (generated from the
+// template manifests by build-catalog.mjs), with search, type filters, a
+// decision wizard, and live previews. No build.
 
 const TIER_LABEL = { static: "Static", ssg: "SSG", spa: "SPA", data: "Data", native: "Native" };
 
@@ -10,7 +11,7 @@ const SKILL_PROMPT = {
   "eleventy": "an Eleventy site",
   "jekyll": "a Jekyll site",
 };
-const promptFor = (t) => `/create-gh-pages-site ${SKILL_PROMPT[t.name] || `a ${t.framework} site`} for owner/repo`;
+const promptFor = (t) => `/create-gh-pages-site ${SKILL_PROMPT[t.name] || `a ${t.framework} site`}`;
 
 function el(tag, attrs = {}, ...children) {
   const node = document.createElement(tag);
@@ -40,6 +41,21 @@ function matches(t) {
 }
 
 // ---- card -----------------------------------------------------------------
+function cmdRow(text) {
+  const code = el("code", { class: "cmd", text });
+  const btn = el("button", { class: "copy-btn", type: "button", "aria-label": "Copy command", title: "Copy" }, "Copy");
+  btn.addEventListener("click", async () => {
+    try {
+      await navigator.clipboard.writeText(text);
+      btn.textContent = "Copied!";
+    } catch {
+      btn.textContent = "Press ⌘/Ctrl+C";
+    }
+    setTimeout(() => (btn.textContent = "Copy"), 1500);
+  });
+  return el("div", { class: "use-row" }, code, btn);
+}
+
 function card(t) {
   const head = el("div", { class: "card-head" },
     el("h3", { text: t.title }),
@@ -58,17 +74,13 @@ function card(t) {
   const tags = el("div", { class: "tags" }, ...(t.tags || []).map((tag) => el("span", { class: "tag", text: tag })));
 
   const actions = el("div", { class: "actions" },
-    t.preview
-      ? el("a", { class: "btn btn-sm", href: `./preview/${t.name}/`, target: "_blank", rel: "noopener" }, "Live preview ↗")
-      : el("span", { class: "btn btn-sm btn-disabled", title: "Preview not built for this template" }, "No preview"),
+    el("a", { class: "btn btn-sm", href: `./preview/${t.name}/`, target: "_blank", rel: "noopener" }, "Live preview ↗"),
     el("a", { class: "btn btn-sm btn-ghost", href: `https://github.com/jongio/gh-pages-templates/tree/main/templates/${t.name}`, target: "_blank", rel: "noopener" }, "Source ↗"),
   );
 
   const use = el("div", { class: "use" },
     el("span", { class: "use-label", text: "Ask Copilot" }),
-    el("code", { class: "cmd", text: promptFor(t) }),
-    el("span", { class: "use-label", text: "Or the CLI" }),
-    el("code", { class: "cmd", text: `new-site.mjs ${t.name} --repo owner/name` }),
+    cmdRow(promptFor(t)),
   );
 
   return el("article", { class: "card", "data-template": t.name },
