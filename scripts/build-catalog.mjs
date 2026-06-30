@@ -1,7 +1,7 @@
 #!/usr/bin/env node
-// build-catalog.mjs — generate gallery/templates.json from the per-template
-// template.json manifests. The gallery renders from this file, and a test
-// asserts it stays in sync, so the gallery never drifts from the templates.
+// build-catalog.mjs — generate site/templates.json from the per-template
+// template.json manifests. The site renders from this committed file, and
+// validate.mjs asserts it stays in sync, so the catalog never drifts.
 //
 //   node scripts/build-catalog.mjs
 
@@ -11,7 +11,7 @@ import { fileURLToPath } from "node:url";
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const TEMPLATES_DIR = resolve(__dirname, "..", "templates");
-const OUT_FILE = resolve(__dirname, "..", "gallery", "templates.json");
+const OUT_FILE = resolve(__dirname, "..", "site", "templates.json");
 
 /** Read every template.json under templates/ and return a sorted catalog. */
 export function buildCatalog(dir = TEMPLATES_DIR) {

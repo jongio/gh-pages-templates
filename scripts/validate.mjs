@@ -111,6 +111,12 @@ test("every template documents features for the gallery", () => {
     assert.ok(Array.isArray(t.features) && t.features.length > 0, `${t.name} has no features[]`);
   }
 });
+test("site/templates.json is committed and in sync with the manifests", () => {
+  const catalogFile = join(ROOT, "site", "templates.json");
+  assert.ok(existsSync(catalogFile), "site/templates.json missing — run `node scripts/build-catalog.mjs`");
+  const onDisk = readFileSync(catalogFile, "utf8");
+  assert.equal(onDisk, serializeCatalog(buildCatalog()), "site/templates.json is stale — run `node scripts/build-catalog.mjs`");
+});
 
 // build-site assembler: a static-tier template stamps with the preview base and
 // carries the GitHub source link (the static-copy path build-site publishes).

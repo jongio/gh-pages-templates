@@ -1,8 +1,5 @@
-# Built site (gallery + generated catalog + live previews)
-site/
-
-# Generated catalog when running build-catalog.mjs directly
-gallery/templates.json
+# Live template previews — built into site/ by scripts/build-site.mjs (CI rebuilds on deploy)
+site/preview/
 
 # Dependencies / build output from preview builds
 node_modules/

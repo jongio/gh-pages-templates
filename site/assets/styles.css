@@ -47,6 +47,28 @@ code {
 h1 { font-size: clamp(2rem, 6vw, 3.25rem); line-height: 1.1; margin: 0 0 0.75rem; }
 .lede { font-size: 1.12rem; color: var(--muted); max-width: 58ch; margin: 0 auto 1.5rem; }
 .cta { display: flex; gap: 0.75rem; justify-content: center; flex-wrap: wrap; }
+
+.quickstart {
+  max-width: 60ch; margin: 0 auto 1.75rem; text-align: left;
+  background: var(--panel); border: 1px solid var(--border);
+  border-radius: var(--radius); padding: 1.35rem 1.5rem;
+}
+.quickstart-lead { margin: 0 0 1.1rem; color: var(--fg); font-size: 1rem; line-height: 1.5; }
+.steps { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 1.1rem; }
+.step { display: flex; gap: 0.85rem; align-items: flex-start; }
+.step-num {
+  flex: none; width: 1.7rem; height: 1.7rem; border-radius: 50%;
+  background: var(--accent); color: #fff; font-weight: 700; font-size: 0.9rem;
+  display: grid; place-items: center; margin-top: 0.15rem;
+}
+.step-body { flex: 1; min-width: 0; }
+.step-title { margin: 0 0 0.2rem; font-weight: 600; font-size: 1.02rem; }
+.step-body .muted { margin: 0 0 0.45rem; }
+.quickstart pre {
+  background: var(--bg); border: 1px solid var(--border); border-radius: 10px;
+  padding: 0.7rem 3.75rem 0.7rem 0.9rem; overflow-x: auto; margin: 0; position: relative;
+}
+.quickstart pre code { background: none; padding: 0; font-size: 0.85rem; line-height: 1.5; white-space: pre-wrap; overflow-wrap: anywhere; }
 .btn {
   display: inline-block; padding: 0.65rem 1.2rem; border-radius: var(--radius);
   background: var(--accent); color: #fff; text-decoration: none; font-weight: 600;
@@ -124,6 +146,10 @@ h1 { font-size: clamp(2rem, 6vw, 3.25rem); line-height: 1.1; margin: 0 0 0.75rem
 .use-label { font-size: 0.68rem; text-transform: uppercase; letter-spacing: 0.05em; color: var(--muted); font-weight: 600; }
 .use-label:not(:first-child) { margin-top: 0.4rem; }
 .cmd { display: block; white-space: pre-wrap; word-break: break-all; font-size: 0.82rem; }
+.use-row { display: flex; align-items: flex-start; gap: 0.35rem; }
+.use-row .cmd { flex: 1; }
+.use-row .copy-btn { flex: none; cursor: pointer; font: inherit; font-size: 0.68rem; font-weight: 600; padding: 0.2rem 0.5rem; border-radius: 6px; border: 1px solid var(--border); background: var(--bg); color: var(--muted); white-space: nowrap; }
+.use-row .copy-btn:hover { color: var(--fg); border-color: var(--muted); }
 
 .loading, .error { text-align: center; color: var(--muted); }
 .error { color: #f85149; }
@@ -138,16 +164,17 @@ h1 { font-size: clamp(2rem, 6vw, 3.25rem); line-height: 1.1; margin: 0 0 0.75rem
   padding: 0.9rem 1rem; overflow-x: auto; margin: 0.5rem 0; position: relative;
 }
 .panel pre code { background: none; padding: 0; font-size: 0.85rem; line-height: 1.5; }
-.copy-btn {
+.panel pre .copy-btn, .quickstart pre .copy-btn {
   position: absolute; top: 0.55rem; right: 0.55rem;
   font: inherit; font-size: 0.72rem; font-weight: 600;
   padding: 0.25rem 0.65rem; border-radius: 7px;
   border: 1px solid var(--border); background: var(--bg); color: var(--muted);
   cursor: pointer; opacity: 0.7; transition: opacity 0.15s, color 0.15s, border-color 0.15s;
 }
-.panel pre:hover .copy-btn, .copy-btn:focus-visible { opacity: 1; }
-.copy-btn:hover { border-color: var(--accent); color: var(--fg); }
-.copy-btn.copied { color: #3fb950; border-color: color-mix(in srgb, #3fb950 50%, var(--border)); }
+.panel pre:hover .copy-btn, .panel pre .copy-btn:focus-visible,
+.quickstart pre:hover .copy-btn, .quickstart pre .copy-btn:focus-visible { opacity: 1; }
+.panel pre .copy-btn:hover, .quickstart pre .copy-btn:hover { border-color: var(--accent); color: var(--fg); }
+.panel pre .copy-btn.copied, .quickstart pre .copy-btn.copied { color: #3fb950; border-color: color-mix(in srgb, #3fb950 50%, var(--border)); }
 .muted { color: var(--muted); font-size: 0.92rem; }
 
 .foot { text-align: center; color: var(--muted); border-top: 1px solid var(--border); padding-top: 1.5rem; margin-top: 3.5rem; }
