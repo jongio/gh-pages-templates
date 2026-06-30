@@ -210,7 +210,7 @@ if (yearEl) yearEl.textContent = String(new Date().getFullYear());
 
 // ---- Copy-to-clipboard buttons for install code blocks --------------------
 function addCopyButtons() {
-  for (const pre of document.querySelectorAll(".panel pre")) {
+  for (const pre of document.querySelectorAll(".panel pre, .quickstart pre")) {
     if (pre.querySelector(".copy-btn")) continue;
     const btn = el("button", { class: "copy-btn", type: "button", "aria-label": "Copy to clipboard" }, "Copy");
     btn.addEventListener("click", async () => {

@@ -38,12 +38,43 @@
         <p class="lede">
           A registry of ready-to-deploy GitHub Pages starters. Each one ships the
           current GitHub Actions Pages workflow and the right base-path setup, so
-          it deploys correctly to a user or project site with no fiddling. Preview
-          them live, then scaffold one into your repo.
+          it deploys correctly to a user or project site with no fiddling.
         </p>
+
+        <div class="quickstart" aria-label="Get started in two steps">
+          <p class="quickstart-lead">
+            Don't pick a template by hand — the
+            <code>/create-gh-pages-site</code> Copilot skill generates a site
+            <strong>tailored to your repo</strong>. It reads the repo you point it
+            at (or the one you're working in) and wires the framework, base path,
+            and deploy workflow to fit it.
+          </p>
+          <ol class="steps">
+            <li class="step">
+              <span class="step-num">1</span>
+              <div class="step-body">
+                <p class="step-title">Install the skill</p>
+                <p class="muted">Paste into Copilot chat — you only do this once:</p>
+                <pre><code>install create-gh-pages-site from jongio/skills</code></pre>
+              </div>
+            </li>
+            <li class="step">
+              <span class="step-num">2</span>
+              <div class="step-body">
+                <p class="step-title">Generate your site</p>
+                <p class="muted">
+                  Run it in the repo you want the site for, or point it at one with
+                  <code>owner/name</code> — Copilot customizes the result to that repo:
+                </p>
+                <pre><code>/create-gh-pages-site</code></pre>
+              </div>
+            </li>
+          </ol>
+        </div>
+
         <p class="cta">
           <a class="btn" href="#templates">Browse templates</a>
-          <a class="btn btn-ghost" href="#install">Install the skill</a>
+          <a class="btn btn-ghost" href="#install">Other install options</a>
           <a class="btn btn-ghost" href="#contribute">Submit a template</a>
         </p>
       </header>
@@ -74,7 +105,7 @@
 
         <h3>Just ask Copilot</h3>
         <p class="muted">Paste this into the Copilot chat — it installs the skill for you:</p>
-        <pre><code>install create-gh-pages-site jongio/skills</code></pre>
+        <pre><code>install create-gh-pages-site from jongio/skills</code></pre>
 
         <h3>Or by command</h3>
         <pre><code>copilot plugin marketplace add jongio/skills
