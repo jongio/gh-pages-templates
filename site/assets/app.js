@@ -208,6 +208,30 @@ themeBtn?.addEventListener("click", () => {
 const yearEl = document.getElementById("year");
 if (yearEl) yearEl.textContent = String(new Date().getFullYear());
 
+// ---- Copy-to-clipboard buttons for install code blocks --------------------
+function addCopyButtons() {
+  for (const pre of document.querySelectorAll(".panel pre")) {
+    if (pre.querySelector(".copy-btn")) continue;
+    const btn = el("button", { class: "copy-btn", type: "button", "aria-label": "Copy to clipboard" }, "Copy");
+    btn.addEventListener("click", async () => {
+      const text = (pre.querySelector("code")?.textContent ?? pre.textContent).trim();
+      try {
+        await navigator.clipboard.writeText(text);
+      } catch (e) {
+        const ta = document.createElement("textarea");
+        ta.value = text; document.body.append(ta); ta.select();
+        try { document.execCommand("copy"); } catch (_) {}
+        ta.remove();
+      }
+      btn.textContent = "Copied!";
+      btn.classList.add("copied");
+      setTimeout(() => { btn.textContent = "Copy"; btn.classList.remove("copied"); }, 1800);
+    });
+    pre.append(btn);
+  }
+}
+addCopyButtons();
+
 async function load() {
   const host = document.getElementById("templates");
   try {

@@ -72,16 +72,20 @@
           the exact prompt.
         </p>
 
-        <h3>Option A — the skills CLI</h3>
+        <h3>Just ask Copilot</h3>
+        <p class="muted">Paste this into the Copilot chat — it installs the skill for you:</p>
+        <pre><code>install create-gh-pages-site jongio/skills</code></pre>
+
+        <h3>Or by command</h3>
+        <pre><code>copilot plugin marketplace add jongio/skills
+copilot plugin install create-gh-pages-site@jongio-skills</code></pre>
+
+        <h3>Or the skills CLI</h3>
         <pre><code># Global, for GitHub Copilot:
 npx skills add jongio/skills --skill create-gh-pages-site -g --agent github-copilot
 
 # …or into the current project instead (drop -g):
 npx skills add jongio/skills --skill create-gh-pages-site</code></pre>
-
-        <h3>Option B — the Copilot plugin marketplace</h3>
-        <pre><code>copilot plugin marketplace add jongio/skills
-copilot plugin install create-gh-pages-site@jongio-skills</code></pre>
 
         <p class="muted">
           In the Copilot app: <strong>Settings → Plugins → Install ▾ → Add
