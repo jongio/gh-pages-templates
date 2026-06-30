@@ -1,0 +1,4 @@
+# Normalize line endings to LF in the repo and working tree on every platform.
+# Keeps the generated site/templates.json drift check (LF output) from failing
+# for Windows contributors who have core.autocrlf=true.
+* text=auto eol=lf
