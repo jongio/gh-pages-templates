@@ -26,9 +26,22 @@ Astro/Jekyll use their official actions). No `gh-pages` branch.
 
 ## Use a template
 
-**With the Copilot skill** (recommended) — install
+**With the Copilot skill** (recommended) — the
 [`create-gh-pages-site`](https://github.com/jongio/skills/tree/main/skills/create-gh-pages-site)
-and describe the site you want; it scaffolds from this registry:
+skill scaffolds from this registry. Install it by asking Copilot:
+
+```
+install create-gh-pages-site from jongio/skills
+```
+
+Or with the [skills CLI](https://github.com/vercel-labs/skills):
+
+```sh
+npx skills add jongio/skills --skill create-gh-pages-site -g --agent github-copilot
+```
+
+Then reload with `/skills reload` (or start a new session) and describe the site
+you want — it scaffolds from this registry:
 
 ```
 /create-gh-pages-site an Astro blog for octocat/blog
