@@ -1,0 +1,6 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="640" height="360" viewBox="0 0 640 360">
+  <rect width="640" height="360" rx="24" fill="#161b22"/>
+  <circle cx="320" cy="148" r="58" fill="#8957e5"/>
+  <path fill="#fff" d="M288 112h64v72h-64zm13 16v8h38v-8zm0 18v8h38v-8zm0 18v8h25v-8z"/>
+  <text x="320" y="260" fill="#e6edf3" font-family="system-ui, sans-serif" font-size="28" text-anchor="middle">Release notes</text>
+</svg>

@@ -1,0 +1,6 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="640" height="360" viewBox="0 0 640 360">
+  <rect width="640" height="360" rx="24" fill="#161b22"/>
+  <circle cx="320" cy="148" r="58" fill="#238636"/>
+  <path fill="none" stroke="#fff" stroke-linecap="round" stroke-linejoin="round" stroke-width="16" d="m287 149 22 22 46-52"/>
+  <text x="320" y="260" fill="#e6edf3" font-family="system-ui, sans-serif" font-size="28" text-anchor="middle">Review helper</text>
+</svg>

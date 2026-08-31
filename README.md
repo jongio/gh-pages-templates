@@ -56,10 +56,16 @@ node scripts/new-site.mjs astro --repo octocat/blog --site-name "Octocat's Blog"
 …or from anywhere, pointing at this registry (needs git + access):
 
 ```sh
-node scripts/new-site.mjs astro --repo octocat/blog --registry jongio/gh-pages-templates
+node scripts/new-site.mjs astro --repo octocat/blog \
+  --registry jongio/gh-pages-templates \
+  --registry-ref 0123456789abcdef0123456789abcdef01234567
 ```
 
-Then push to `main` and set **Settings → Pages → Source → GitHub Actions**.
+Remote registries require a full commit SHA. Branches and tags are rejected.
+Template paths, symbolic links, workflow security, and metadata are validated
+before the destination is replaced.
+
+Then push to the configured default branch and set **Settings → Pages → Source → GitHub Actions**.
 
 ## The site + live previews
 
