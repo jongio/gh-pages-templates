@@ -9,8 +9,8 @@
   "needsBuild": true,
   "build": "astro build",
   "output": "dist",
-  "basePathMechanism": "site + base in astro.config.mjs (withastro/action)",
-  "deploy": "withastro/action + deploy-pages",
+  "basePathMechanism": "site and base in astro.config.mjs",
+  "deploy": "SHA-pinned Pages actions with script-suppressed npm install",
   "tags": ["astro", "ssg", "islands", "content"],
   "features": [
     "Light/dark toggle",

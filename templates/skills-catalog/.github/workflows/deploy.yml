@@ -1,8 +1,4 @@
-name: Deploy Astro site to GitHub Pages
-
-# Astro build with the official GitHub Pages actions.
-# https://docs.astro.build/en/guides/deploy/github/
-# Set Settings → Pages → Source to "GitHub Actions".
+name: Deploy skills catalog to GitHub Pages
 
 on:
   push:

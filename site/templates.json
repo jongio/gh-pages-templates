@@ -38,8 +38,8 @@
     "needsBuild": true,
     "build": "astro build",
     "output": "dist",
-    "basePathMechanism": "site + base in astro.config.mjs (withastro/action)",
-    "deploy": "withastro/action + deploy-pages",
+    "basePathMechanism": "site and base in astro.config.mjs",
+    "deploy": "SHA-pinned Pages actions with script-suppressed npm install",
     "tags": [
       "astro",
       "ssg",
@@ -144,5 +144,37 @@
       "Front-matter defaults"
     ],
     "order": 5
+  },
+  {
+    "name": "skills-catalog",
+    "title": "Skills Catalog",
+    "tagline": "A searchable catalog for reusable agent skills.",
+    "description": "An Astro skills catalog with content collections, searchable grid and list views, detail pages, install copy controls, theme switching, and accessible responsive layouts.",
+    "framework": "Astro",
+    "tier": "ssg",
+    "language": "TypeScript",
+    "needsBuild": true,
+    "build": "astro build",
+    "output": "dist",
+    "basePathMechanism": "site and base in astro.config.mjs",
+    "deploy": "SHA-pinned Pages actions with script-suppressed npm install",
+    "tags": [
+      "astro",
+      "ssg",
+      "catalog",
+      "skills",
+      "content"
+    ],
+    "features": [
+      "Astro content collections",
+      "Searchable grid and list views",
+      "Skill detail pages",
+      "Install command copy controls",
+      "Light and dark themes",
+      "Responsive accessible UI",
+      "Base-path-safe links",
+      "SHA-pinned Pages workflow"
+    ],
+    "order": 6
   }
 ]

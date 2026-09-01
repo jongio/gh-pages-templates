@@ -1,0 +1,6 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="640" height="360" viewBox="0 0 640 360">
+  <rect width="640" height="360" rx="24" fill="#161b22"/>
+  <circle cx="320" cy="148" r="58" fill="#1f6feb"/>
+  <path fill="#fff" d="M292 140h56v16h-56zm0 28h38v16h-38z"/>
+  <text x="320" y="260" fill="#e6edf3" font-family="system-ui, sans-serif" font-size="28" text-anchor="middle">Example skill</text>
+</svg>
