@@ -24,8 +24,10 @@ The content schema is in `src/content.config.ts`.
 
 ## Develop
 
+Requires Node.js 22.12.0 or later and npm 9.6.5 or later.
+
 ```sh
-npm install
+npm ci
 npm run dev
 ```
 

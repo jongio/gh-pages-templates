@@ -19,10 +19,12 @@ project site (`/repo/`) with no fiddling.
 | `react-vite` | interactive SPAs / dashboards | `base` + `404.html` fallback | `vite build` |
 | `eleventy` | data/Markdown-driven sites | `pathPrefix` via env + `url` filter | `eleventy` |
 | `jekyll` | GitHub-native / existing Jekyll | `baseurl` in `_config.yml` | Jekyll |
+| `skills-catalog` | searchable agent skill marketplaces | `base` in `astro.config.mjs` | `astro build` |
 
 All deploy via the GitHub Actions Pages source using the current first-party
-actions (`configure-pages@v5` → `upload-pages-artifact@v3` → `deploy-pages@v4`;
-Astro/Jekyll use their official actions). No `gh-pages` branch.
+actions (`configure-pages@v6`, `upload-pages-artifact@v5`, and
+`deploy-pages@v5`). Jekyll also uses `jekyll-build-pages@v1`. No `gh-pages`
+branch.
 
 ## Use a template
 
@@ -30,7 +32,7 @@ Astro/Jekyll use their official actions). No `gh-pages` branch.
 [`create-gh-pages-site`](https://github.com/jongio/skills/tree/main/skills/create-gh-pages-site)
 skill scaffolds from this registry. Install it by asking Copilot:
 
-```
+```text
 install create-gh-pages-site from jongio/skills
 ```
 
@@ -43,7 +45,7 @@ npx skills add jongio/skills --skill create-gh-pages-site -g --agent github-copi
 Then reload with `/skills reload` (or start a new session) and describe the site
 you want — it scaffolds from this registry:
 
-```
+```text
 /create-gh-pages-site an Astro blog for octocat/blog
 ```
 
@@ -121,7 +123,7 @@ via the generator's sentinels — see [`CONTRIBUTING.md`](CONTRIBUTING.md). CI
 
 ## Layout
 
-```
+```text
 templates/<name>/          Registry source (with __SENTINEL__ placeholders)
   template.json            Manifest (site catalog + generator read this)
   .github/workflows/deploy.yml
