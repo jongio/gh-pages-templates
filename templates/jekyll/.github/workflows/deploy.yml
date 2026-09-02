@@ -18,6 +18,7 @@ concurrency:
 
 jobs:
   build:
+    if: github.ref == 'refs/heads/__DEFAULT_BRANCH__'
     runs-on: ubuntu-latest
     timeout-minutes: 10
     permissions:
@@ -40,6 +41,7 @@ jobs:
         uses: actions/upload-pages-artifact@fc324d3547104276b827a68afc52ff2a11cc49c9 # v5.0.0
 
   deploy:
+    if: github.ref == 'refs/heads/__DEFAULT_BRANCH__'
     needs: build
     runs-on: ubuntu-latest
     timeout-minutes: 10
