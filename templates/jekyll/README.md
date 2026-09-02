@@ -15,7 +15,8 @@ Site URL: __SITE_URL__
 
 ## Develop locally
 
-Requires Ruby + Bundler.
+Validated with Ruby 4.0 and Bundler 4. The committed `Gemfile.lock` controls
+the installed versions, and CI additionally enables Bundler frozen mode.
 
 ```sh
 bundle install

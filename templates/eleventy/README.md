@@ -17,8 +17,10 @@ Site URL: __SITE_URL__
 
 ## Develop locally
 
+Requires Node.js 24 or later and npm 11.10 or later.
+
 ```sh
-npm install
+npm ci
 npm run dev      # http://localhost:8080 (served at "/")
 npm run build    # outputs _site/
 ```

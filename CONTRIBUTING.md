@@ -10,6 +10,7 @@ automatically.
 templates/<name>/
   template.json                 Manifest (required — see below)
   .github/workflows/deploy.yml  Pages deploy workflow (required)
+  package-lock.json/Gemfile.lock Locked graph for buildable templates
   README.md                     Human docs for the stamped site (required)
   <site files…>                 index.html / src/ / _config.yml / etc.
   .gitignore                    What the user's repo should ignore (recommended)
@@ -72,12 +73,17 @@ If the framework needs no base path (all relative links), you don't need
 Use the official **GitHub Actions** Pages flow (Source = "GitHub Actions"):
 
 ```
-actions/configure-pages@v5 → build → actions/upload-pages-artifact@v3 → actions/deploy-pages@v4
+actions/configure-pages@v6 → build → actions/upload-pages-artifact@v5 → actions/deploy-pages@v5
 ```
 
 Every `deploy.yml` MUST declare:
 
-- `permissions: { contents: read, pages: write, id-token: write }`
+- top-level `permissions: { contents: read }`
+- build-job `permissions: { contents: read, pages: read }`
+- deploy-job `permissions: { pages: write, id-token: write }`
+- exactly one `actions/deploy-pages` step in the privileged deploy job
+- `persist-credentials: false` on checkout steps
+- a timeout on every runner job
 - `concurrency: { group: pages, cancel-in-progress: false }`
 - the `github-pages` environment on the deploy job
 - only first-party actions — no `peaceiris/actions-gh-pages`, no
@@ -90,7 +96,7 @@ Every `deploy.yml` MUST declare:
 ```sh
 npm test                                   # validate.mjs: manifests + workflows + stamp + catalog sync
 node scripts/new-site.mjs my-template --repo octocat/demo --dir /tmp/x
-cd /tmp/x && npm install && npm run build  # if it builds
+cd /tmp/x && npm ci --ignore-scripts && npm run build  # if it builds
 ```
 
 Confirm the built output's asset/link URLs carry the project prefix (`/repo/…`),

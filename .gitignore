@@ -10,7 +10,6 @@ _site/
 .tmp/
 
 # Bundler
-Gemfile.lock
 vendor/
 .bundle/
 

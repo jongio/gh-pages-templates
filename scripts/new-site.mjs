@@ -32,9 +32,11 @@ import { fileURLToPath } from "node:url";
 import { execFileSync } from "node:child_process";
 import { tmpdir } from "node:os";
 import { validateWorkflowTree } from "./workflow-security.mjs";
+import { validateTemplateDependencies } from "./template-dependencies.mjs";
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const TEMPLATES_DIR = resolve(__dirname, "..", "templates");
+const TRUSTED_REGISTRY = "jongio/gh-pages-templates";
 
 // Files/dirs never copied into a stamped site.
 const SKIP_ENTRIES = new Set(["node_modules", "dist", "_site", ".git", ".cache", ".jekyll-cache", "template.json"]);
@@ -360,9 +362,17 @@ export function rewriteTree(dir, replacements) {
   }
 }
 
-/** Build the clone URL for a registry "owner/repo" (or pass a full URL through). */
+/** Build the canonical clone URL for the trusted public template registry. */
 export function registryCloneUrl(registry) {
-  return /^https?:\/\//.test(registry) ? registry : `https://github.com/${registry}.git`;
+  const value = String(registry ?? "").trim();
+  const repository = value
+    .replace(/^https:\/\/github\.com\//i, "")
+    .replace(/\/+$/, "")
+    .replace(/\.git$/i, "");
+  if (repository.toLowerCase() !== TRUSTED_REGISTRY) {
+    throw new Error(`Remote registry must be ${TRUSTED_REGISTRY}.`);
+  }
+  return `https://github.com/${TRUSTED_REGISTRY}.git`;
 }
 
 /** Fetch a template subdir from a remote registry into a temp dir; returns its path. */
@@ -462,6 +472,7 @@ export function stampTemplate({
       copyTemplate(srcDir, stage);
       rewriteTree(stage, replacements);
       validateWorkflowTree(stage);
+      validateTemplateDependencies(stage, manifest);
       publishStage(stage, destDir, force);
     } finally {
       rmSync(stage, { recursive: true, force: true });
@@ -531,7 +542,7 @@ Options:
   --default-branch <id>    Repository default branch (default: main)
   --package-name <id>      Package identifier (default: repository name)
   --marketplace-id <id>    Marketplace identifier (default: owner-repository)
-  --registry <owner/repo>  Fetch template from a remote registry (git + network)
+  --registry <owner/repo>  Fetch from the trusted ${TRUSTED_REGISTRY} registry
   --registry-ref <sha>     Required full commit SHA for a remote registry
   --force                  Write into a non-empty directory
   --list                   List templates and exit
@@ -591,13 +602,16 @@ function main() {
     console.log(`\n✓ Created ${manifest.title} site in ${dir}`);
     console.log(`  base path: ${replacements.__BASE_PATH__}`);
     console.log(`  site URL:  ${replacements.__SITE_URL__}\n`);
+    if (args.registry) {
+      console.warn(`  Security: review trusted registry commit ${args["registry-ref"]} before running build commands.\n`);
+    }
     console.log("Next steps:");
     let step = 1;
     if (manifest.needsBuild) {
       if (manifest.language === "Ruby") {
-        console.log(`  ${step++}. cd ${dir} && bundle install   # local preview only; CI builds it for you`);
+        console.log(`  ${step++}. cd ${dir} && bundle install   # uses the committed Gemfile.lock`);
       } else {
-        console.log(`  ${step++}. cd ${dir} && npm install --ignore-scripts --no-audit --no-fund && npm run build`);
+        console.log(`  ${step++}. cd ${dir} && npm ci --ignore-scripts --no-audit --no-fund && npm run build`);
       }
     }
     console.log(`  ${step++}. Commit and push to the repo's ${replacements.__DEFAULT_BRANCH__} branch.`);
