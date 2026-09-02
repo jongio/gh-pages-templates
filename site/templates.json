@@ -39,7 +39,7 @@
     "build": "astro build",
     "output": "dist",
     "basePathMechanism": "site and base in astro.config.mjs",
-    "deploy": "SHA-pinned Pages actions with script-suppressed npm install",
+    "deploy": "SHA-pinned Pages actions with locked, script-suppressed npm ci",
     "tags": [
       "astro",
       "ssg",
@@ -157,7 +157,7 @@
     "build": "astro build",
     "output": "dist",
     "basePathMechanism": "site and base in astro.config.mjs",
-    "deploy": "SHA-pinned Pages actions with script-suppressed npm install",
+    "deploy": "SHA-pinned Pages actions with locked, script-suppressed npm ci",
     "tags": [
       "astro",
       "ssg",

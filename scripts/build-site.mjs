@@ -34,6 +34,21 @@ const IS_WIN = process.platform === "win32";
 const NPM = IS_WIN ? "npm.cmd" : "npm";
 const BUNDLE = IS_WIN ? "bundle.cmd" : "bundle";
 
+export function dependencyInstallFor(manifest) {
+  if (manifest.language === "Ruby") {
+    return {
+      command: BUNDLE,
+      args: ["install"],
+      env: { BUNDLE_FROZEN: "true" },
+    };
+  }
+  return {
+    command: NPM,
+    args: ["ci", "--ignore-scripts", "--no-audit", "--no-fund", "--loglevel=error"],
+    env: {},
+  };
+}
+
 function run(cmd, args, cwd, extraEnv = {}) {
   const opts = { cwd, env: { ...process.env, ...extraEnv }, stdio: "pipe", encoding: "utf8" };
   if (IS_WIN) {
@@ -80,13 +95,15 @@ function buildPreview(template, manifest) {
     }
 
     if (manifest.language === "Ruby") {
-      let r = run(BUNDLE, ["install"], dir);
+      const install = dependencyInstallFor(manifest);
+      let r = run(install.command, install.args, dir, install.env);
       if (r.status !== 0) { console.warn(`  • ${name}: bundle install failed\n${r.stderr || r.stdout}`); return false; }
       r = run(BUNDLE, ["exec", "jekyll", "build"], dir);
       if (r.status !== 0) { console.warn(`  • ${name}: jekyll build failed\n${r.stderr || r.stdout}`); return false; }
     } else {
-      let r = run(NPM, ["install", "--no-audit", "--no-fund", "--loglevel=error"], dir);
-      if (r.status !== 0) { console.warn(`  • ${name}: npm install failed\n${r.stderr || r.stdout}`); return false; }
+      const install = dependencyInstallFor(manifest);
+      let r = run(install.command, install.args, dir, install.env);
+      if (r.status !== 0) { console.warn(`  • ${name}: npm ci failed\n${r.stderr || r.stdout}`); return false; }
       // Eleventy reads its base from PATH_PREFIX at build time.
       const extraEnv = name === "eleventy" ? { PATH_PREFIX: previewBase } : {};
       r = run(NPM, ["run", "build"], dir, extraEnv);
@@ -126,4 +143,6 @@ function main() {
   console.log(`\nsite/preview ready — ${built.length}/${catalog.length} live previews: ${built.join(", ") || "(none)"}`);
 }
 
-main();
+if (process.argv[1] && resolve(process.argv[1]) === resolve(fileURLToPath(import.meta.url))) {
+  main();
+}

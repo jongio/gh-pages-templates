@@ -24,7 +24,7 @@ The content schema is in `src/content.config.ts`.
 
 ## Develop
 
-Requires Node.js 22.12.0 or later and npm 9.6.5 or later.
+Requires Node.js 24 or later and npm 11.10 or later.
 
 ```sh
 npm ci
@@ -54,4 +54,5 @@ The generated site uses `__BASE_PATH__` and deploys to __SITE_URL__.
 2. In repository settings, set Pages source to **GitHub Actions**.
 3. Push to `__DEFAULT_BRANCH__` or run the workflow manually.
 
-The workflow grants only `contents: read`, `pages: write`, and `id-token: write`.
+The workflow grants top-level `contents: read`, build-job `pages: read`, and
+deploy-job `pages: write` plus `id-token: write`.

@@ -1,5 +1,6 @@
-import { defineCollection, z } from "astro:content";
+import { defineCollection } from "astro:content";
 import { glob } from "astro/loaders";
+import { z } from "astro/zod";
 
 // A type-checked content collection loaded from Markdown files.
 // https://docs.astro.build/en/guides/content-collections/

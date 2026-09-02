@@ -63,6 +63,9 @@ node scripts/new-site.mjs astro --repo octocat/blog \
   --registry-ref 0123456789abcdef0123456789abcdef01234567
 ```
 
+Review the referenced registry commit before running generated build commands.
+Templates contain executable framework configuration and source code.
+
 Remote registries require a full commit SHA. Branches and tags are rejected.
 Template paths, symbolic links, workflow security, and metadata are validated
 before the destination is replaced.
@@ -105,7 +108,7 @@ This repo deploys its own site to GitHub Pages:
 
 1. Push to `main`.
 2. **Settings → Pages → Source → GitHub Actions**.
-3. `.github/workflows/deploy.yml` checks out `site/`, runs `build-site.mjs` to
+3. `.github/workflows/deploy.yml` checks out the repository, runs `build-site.mjs` to
    regenerate the catalog and build the live previews into `site/preview/` (Ruby is
    set up for the Jekyll preview), and publishes `site/`. The live URL appears in
    the Actions run.

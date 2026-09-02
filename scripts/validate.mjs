@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 // validate.mjs - CI gate for the registry. Validates every template's manifest
 // and Pages deploy workflow, and that the generator stamps it with no leftover
-// placeholders. No deps; Node 18+.  Run:  node scripts/validate.mjs
+// placeholders. No deps; Node 24+.  Run:  node scripts/validate.mjs
 
 import assert from "node:assert/strict";
 import { readFileSync, existsSync, readdirSync, mkdirSync, mkdtempSync, rmSync, lstatSync, symlinkSync, writeFileSync } from "node:fs";
@@ -16,11 +16,14 @@ import {
   computeReplacements,
   listTemplates,
   readManifest,
+  registryCloneUrl,
   rewriteTree,
   stampTemplate,
 } from "./new-site.mjs";
 import { validateWorkflowText } from "./workflow-security.mjs";
+import { dependencyInstallFor } from "./build-site.mjs";
 import { buildCatalog, serializeCatalog } from "./build-catalog.mjs";
+import { NPM_POLICY, validateTemplateDependencies } from "./template-dependencies.mjs";
 
 const ROOT = resolve(dirname(fileURLToPath(import.meta.url)), "..");
 const TEMPLATES_DIR = join(ROOT, "templates");
@@ -53,11 +56,15 @@ const PER_TEMPLATE_ACTIONS = {
   "eleventy": ["actions/setup-node@", "actions/configure-pages@", "actions/upload-pages-artifact@"],
   "jekyll": ["actions/configure-pages@", "actions/jekyll-build-pages@", "actions/upload-pages-artifact@"],
 };
-
 let passed = 0;
 function test(name, fn) {
   try { fn(); passed++; console.log(`  ok  ${name}`); }
   catch (e) { console.error(`FAIL  ${name}\n      ${e.message}`); process.exitCode = 1; }
+}
+function assertNotIgnored(path) {
+  const ignored = spawnSync("git", ["check-ignore", "--no-index", "--quiet", "--", path], { cwd: ROOT });
+  if (ignored.status === null || ignored.status === 128) return;
+  assert.equal(ignored.status, 1, `${path} is ignored`);
 }
 function walk(dir) {
   const out = [];
@@ -68,98 +75,23 @@ function walk(dir) {
   }
   return out;
 }
-export function workflowRunBlocks(yaml) {
-  const lines = yaml.split("\n");
-  const blocks = [];
-  for (let i = 0; i < lines.length; i++) {
-    const match = lines[i].match(/^(\s*)(?:-\s*)?run:\s*(.*)$/);
-    if (!match) continue;
-    let block = match[2];
-    if (/^[|>]/.test(block)) {
-      if (/^>/.test(block)) {
-        throw new Error("Folded YAML run blocks are not supported.");
-      }
-      if (!/^\|(?:[1-9][+-]?|[+-][1-9]?)?$/.test(block)) {
-        throw new Error(`Unsupported YAML block scalar indicator: ${block}`);
-      }
-      const indent = match[1].length;
-      const body = [];
-      while (i + 1 < lines.length) {
-        const next = lines[i + 1];
-        const nextIndent = next.match(/^\s*/)?.[0].length ?? 0;
-        if (next.trim() && nextIndent <= indent) break;
-        body.push(next);
-        i++;
-      }
-
-      block = body.join("\n");
-    }
-    blocks.push(block);
-  }
-  return blocks;
-}
-
-function assertRunnerJobsHaveTimeouts(yaml) {
-  const lines = yaml.split("\n");
-  for (let index = 0; index < lines.length; index++) {
-    if (!/^    runs-on:\s*\S+/.test(lines[index])) continue;
-    let start = index;
-    while (start > 0 && !/^  [A-Za-z0-9_-]+:\s*$/.test(lines[start])) start--;
-    let end = index + 1;
-    while (
-      end < lines.length &&
-      !/^  [A-Za-z0-9_-]+:\s*$/.test(lines[end]) &&
-      !(/^\S/.test(lines[end]) && lines[end].trim())
-    ) {
-      end++;
-    }
-
-    assert.match(
-      lines.slice(start, end).join("\n"),
-      /^    timeout-minutes:\s*\d+$/m,
-      `runner job at line ${index + 1} has no timeout`,
-    );
-  }
-}
-
-function workflowJobBlocks(yaml) {
-  const lines = yaml.split("\n");
-  const jobs = new Map();
-  const jobsIndex = lines.findIndex((line) => line === "jobs:");
-  if (jobsIndex < 0) return jobs;
-  for (let index = jobsIndex + 1; index < lines.length; index++) {
-    const match = lines[index].match(/^  ([A-Za-z0-9_-]+):\s*$/);
-    if (!match) continue;
-    let end = index + 1;
-    while (end < lines.length && !/^  [A-Za-z0-9_-]+:\s*$/.test(lines[end])) {
-      if (/^\S/.test(lines[end]) && lines[end].trim()) break;
-      end++;
-    }
-    jobs.set(match[1], lines.slice(index, end).join("\n"));
-    index = end - 1;
-  }
-  return jobs;
-}
-
 console.log("gh-pages-templates validation");
 
 const names = listTemplates();
 
 test("at least 6 templates present", () => assert.ok(names.length >= 6, `found ${names.length}`));
 
-test("workflow parser handles literal YAML block scalar indicators", () => {
-  const blocks = workflowRunBlocks(`steps:
-  - run: |-
-      echo \${{ github.ref }}
-  - run: |2-
-      npm ci --ignore-scripts
-`);
-  assert.equal(blocks.length, 2);
-  assert.ok(blocks[0].includes("${{ github.ref }}"));
-  assert.ok(blocks[1].includes("npm ci --ignore-scripts"));
-  assert.throws(
-    () => workflowRunBlocks("steps:\n  - run: >-\n      npm ci --ignore-scripts\n"),
-    /Folded YAML run blocks/,
+test("repository npm runtime and release policies are enforced", () => {
+  const pkg = JSON.parse(readFileSync(join(ROOT, "package.json"), "utf8"));
+  assert.equal(pkg.engines?.node, ">=24.0.0");
+  assert.equal(pkg.engines?.npm, ">=11.10.0");
+  assert.equal(readFileSync(join(ROOT, ".npmrc"), "utf8").replace(/\r\n/g, "\n"), NPM_POLICY);
+  assert.doesNotThrow(() =>
+    validateTemplateDependencies(ROOT, {
+      build: "node scripts/build-site.mjs",
+      needsBuild: true,
+      language: "JavaScript",
+    }),
   );
 });
 
@@ -180,19 +112,42 @@ test("runtime workflow validation rejects unsafe stamped workflows", () => {
       safe.replace(" --ignore-scripts", ""),
       "lifecycle.yml",
     ),
-    /lifecycle-capable install/,
+    /unsupported run command/,
+  );
+  assert.doesNotThrow(() =>
+    validateWorkflowText(
+      safe.replace(
+        "run: npm ci --ignore-scripts --no-audit --no-fund",
+        "run: |-\n          npm ci --ignore-scripts --no-audit --no-fund",
+      ),
+      "literal-block.yml",
+    ),
   );
   const unsafeCases = [
     ["scalar permissions", safe.replace(/permissions:\r?\n/, "permissions: write-all\n"), /block mapping/],
     ["commented permission", safe.replace("contents: read", "contents: write # unsafe"), /unsafe permission/],
+    ["duplicate top-level permission", safe.replace("  contents: read", "  contents: read\n  contents: read"), /duplicate permission/],
+    ["duplicate job permission", safe.replace("      pages: read", "      pages: read\n      pages: read"), /duplicate permission/],
     ["quoted run", safe.replace("run: npm run build", "run: \"echo # ${{ github.ref }}\""), /interpolates workflow context/],
+    ["folded run", safe.replace("run: npm run build", "run: >-\n          npm run build"), /folded run block/],
     ["comment-like run interpolation", safe.replace("run: npm run build", "run: echo tag #x ${{ github.ref }}"), /interpolates workflow context/],
     ["plain multiline run interpolation", safe.replace("run: npm run build", "run:\n          echo ${{ github.ref }}"), /interpolates workflow context/],
     ["top-level deployment permissions", safe.replace(/permissions:\r?\n  contents: read/, "permissions:\n  contents: read\n  pages: write\n  id-token: write"), /top-level permissions/],
+    ["privileged run step", safe.replace("      - name: Deploy to GitHub Pages", "      - name: Exfiltrate\n        run: env\n      - name: Deploy to GitHub Pages"), /privileged job/],
+    ["privileged shorthand run", safe.replace("      - name: Deploy to GitHub Pages", "      - run: env\n      - name: Deploy to GitHub Pages"), /privileged job/],
+    ["privileged shorthand action", safe.replace("      - name: Deploy to GitHub Pages", "      - uses: actions/upload-pages-artifact@fc324d3547104276b827a68afc52ff2a11cc49c9\n      - name: Deploy to GitHub Pages"), /one deploy-pages step/],
+    ["privileged environment variables", safe.replace("    environment:\n      name: github-pages", "    env:\n      TOKEN: ${{ github.token }}\n    environment:\n      name: github-pages"), /privileged job/],
+    ["arbitrary build command", safe.replace("run: npm run build", "run: curl https://example.invalid"), /unsupported run command/],
+    ["shell override", safe.replace("run: npm run build", "shell: bash -c '{0}; curl https://example.invalid'\n        run: npm run build"), /overrides the workflow shell/],
     ["case-variant checkout", safe.replace(/actions\/checkout@([a-f0-9]{40})/, "Actions/Checkout@$1").replace(/^\s*persist-credentials:\s*false\r?\n/m, ""), /disable checkout credentials/],
-    ["yarn lifecycle install", safe.replace("run: npm run build", "run: yarn install"), /lifecycle-capable install/],
-    ["chained npm suppression", safe.replace("run: npm run build", "run: npm ci && echo --ignore-scripts"), /lifecycle-capable install/],
+    ["duplicate checkout input", safe.replace("persist-credentials: false", "persist-credentials: false\n          persist-credentials: true"), /disable checkout credentials/],
+    ["misnested checkout input", safe.replace("with:\n          persist-credentials: false", "env:\n          persist-credentials: false"), /disable checkout credentials/],
+    ["block checkout input", safe.replace("with:\n          persist-credentials: false", "with: |-\n          persist-credentials: false"), /disable checkout credentials/],
+    ["mutable npm install", safe.replace("npm ci --ignore-scripts", "npm install --ignore-scripts"), /unsupported run command/],
+    ["yarn lifecycle install", safe.replace("run: npm run build", "run: yarn install"), /unsupported run command/],
+    ["chained npm suppression", safe.replace("run: npm run build", "run: npm ci && echo --ignore-scripts"), /unsupported run command/],
     ["missing effective Pages permission", safe.replace(/^\s{6}pages:\s*read\r?\n/m, ""), /effective Pages access/],
+    ["unapproved action", safe.replace(/actions\/checkout@([a-f0-9]{40})/, "octocat/checkout@$1"), /unapproved action/],
     ["Docker action", safe.replace(/uses: actions\/checkout@[a-f0-9]{40}/, "uses: docker://alpine:latest"), /unsupported action syntax/],
     ["flow mapping", `${safe}\nevil: { permissions: write-all }\n`, /flow-style mapping/],
     ["flow-mapped Docker action", safe.replace(/uses: actions\/checkout@[a-f0-9]{40}/, "- { uses: docker://alpine:latest }"), /flow-style mapping/],
@@ -202,6 +157,81 @@ test("runtime workflow validation rejects unsafe stamped workflows", () => {
   ];
   for (const [name, workflow, expected] of unsafeCases) {
     assert.throws(() => validateWorkflowText(workflow, `${name}.yml`), expected, name);
+  }
+  assert.throws(
+    () => validateWorkflowText(
+      safe.replace(
+        "run: npm ci --ignore-scripts --no-audit --no-fund",
+        "run: npm ci --ignore-scripts --no-audit --no-fund\n          ; curl https://example.invalid",
+      ),
+      "plain-scalar-continuation.yml",
+    ),
+    /unsupported parsed run command/,
+  );
+  assert.throws(
+    () => validateWorkflowText(
+      safe.replace(
+        "  build:\n",
+        "  ? elevated\n  :\n    ? permissions\n    : write-all\n    steps:\n      - name: Exfiltrate\n        run: npm run build\n  build:\n",
+      ),
+      "explicit-mapping.yml",
+    ),
+    /unsupported jobs key elevated/,
+  );
+});
+
+test("repository workflows use least-privilege credentials", () => {
+  const deploy = readFileSync(join(ROOT, ".github", "workflows", "deploy.yml"), "utf8");
+  assert.doesNotThrow(() => validateWorkflowText(deploy, ".github/workflows/deploy.yml"));
+
+  const validate = readFileSync(join(ROOT, ".github", "workflows", "validate.yml"), "utf8");
+  assert.match(validate, /^permissions:\r?\n  contents: read$/m);
+  assert.match(validate, /^    timeout-minutes:\s*\d+$/m);
+  assert.match(
+    validate,
+    /uses: actions\/checkout@[0-9a-f]{40}\s+#\s+v[\w.-]+\r?\n\s+with:\r?\n\s+persist-credentials: false/,
+  );
+});
+
+test("preview builds use locked dependency installs", () => {
+  const npm = dependencyInstallFor({ language: "JavaScript" });
+  assert.match(npm.command, /^npm(?:\.cmd)?$/);
+  assert.deepEqual(npm.args, ["ci", "--ignore-scripts", "--no-audit", "--no-fund", "--loglevel=error"]);
+  assert.deepEqual(npm.env, {});
+
+  const bundler = dependencyInstallFor({ language: "Ruby" });
+  assert.match(bundler.command, /^bundle(?:\.cmd)?$/);
+  assert.deepEqual(bundler.args, ["install"]);
+  assert.deepEqual(bundler.env, { BUNDLE_FROZEN: "true" });
+});
+
+test("template dependency policy rejects untrusted sources and lifecycle scripts", () => {
+  const source = join(TEMPLATES_DIR, "skills-catalog");
+  const root = mkdtempSync(join(tmpdir(), "ghp-dependency-policy-"));
+  try {
+    for (const file of ["package.json", "package-lock.json", ".npmrc"]) {
+      writeFileSync(join(root, file), readFileSync(join(source, file)));
+    }
+    const manifest = readManifest(source);
+    assert.doesNotThrow(() => validateTemplateDependencies(root, manifest));
+
+    const lockFile = join(root, "package-lock.json");
+    const lock = readFileSync(lockFile, "utf8");
+    writeFileSync(lockFile, lock.replace("https://registry.npmjs.org/", "https://packages.invalid/"));
+    assert.throws(() => validateTemplateDependencies(root, manifest), /non-registry dependency/);
+    writeFileSync(lockFile, lock);
+
+    const packageFile = join(root, "package.json");
+    const pkg = JSON.parse(readFileSync(packageFile, "utf8"));
+    pkg.scripts.postinstall = "node install.js";
+    writeFileSync(packageFile, `${JSON.stringify(pkg, null, 2)}\n`);
+    assert.throws(() => validateTemplateDependencies(root, manifest), /forbidden lifecycle script/);
+    delete pkg.scripts.postinstall;
+    pkg.scripts.build = "node exfiltrate.js";
+    writeFileSync(packageFile, `${JSON.stringify(pkg, null, 2)}\n`);
+    assert.throws(() => validateTemplateDependencies(root, manifest), /unapproved build script/);
+  } finally {
+    rmSync(root, { recursive: true, force: true });
   }
 });
 
@@ -225,6 +255,15 @@ for (const name of names) {
     assert.ok(Array.isArray(m.tags) && m.tags.length > 0);
   });
 
+  if (m.needsBuild) {
+    test(`${name}: dependency sources, locks, runtimes, and scripts meet policy`, () => {
+      assert.doesNotThrow(() => validateTemplateDependencies(tdir, m));
+      const lockName = m.language === "Ruby" ? "Gemfile.lock" : "package-lock.json";
+      const lockPath = join("templates", name, lockName).replaceAll("\\", "/");
+      assertNotIgnored(lockPath);
+    });
+  }
+
   const wf = join(tdir, ".github", "workflows", "deploy.yml");
   test(`${name}: ships a deploy workflow`, () => assert.ok(existsSync(wf)));
   const yaml = existsSync(wf) ? readFileSync(wf, "utf8").replace(/\r\n/g, "\n") : "";
@@ -238,55 +277,6 @@ for (const name of names) {
   });
   test(`${name}: workflow meets the registry security contract`, () => {
     assert.doesNotThrow(() => validateWorkflowText(yaml, wf));
-    const onStart = yaml.indexOf("on:\n");
-    assert.notEqual(onStart, -1, "workflow trigger block is missing");
-    const afterOn = yaml.slice(onStart + "on:\n".length);
-    const nextTopLevel = afterOn.search(/^\S/m);
-    const triggerBlock = nextTopLevel === -1 ? afterOn : afterOn.slice(0, nextTopLevel);
-    const triggers = [...triggerBlock.matchAll(/^  ([\w-]+):/gm)].map((match) => match[1]).sort();
-    assert.deepEqual(triggers, ["push", "workflow_dispatch"], `unexpected triggers: ${triggers.join(", ")}`);
-
-    const permissions = Object.fromEntries(
-      [...yaml.matchAll(/^  (contents|pages|id-token):\s+(\w+)$/gm)].map((match) => [match[1], match[2]]),
-    );
-    assert.deepEqual(permissions, { contents: "read" });
-    const jobs = workflowJobBlocks(yaml);
-    assert.ok(jobs.has("deploy"), "deploy job is missing");
-    for (const [jobName, job] of jobs) {
-      const writes = Object.fromEntries(
-        [...job.matchAll(/^      (contents|pages|id-token):\s+(\w+)$/gm)]
-          .map((match) => [match[1], match[2]]),
-      );
-      assert.deepEqual(
-        writes,
-        jobName === "deploy"
-          ? { contents: "read", pages: "write", "id-token": "write" }
-          : jobName === "build"
-            ? { contents: "read", pages: "read" }
-            : {},
-        `${jobName} has unexpected job permissions`,
-      );
-    }
-    assertRunnerJobsHaveTimeouts(yaml);
-
-    const actionLines = yaml.match(/^\s*uses:\s+.+$/gm) || [];
-    assert.ok(actionLines.length > 0, "no workflow actions found");
-    for (const line of actionLines) {
-      assert.match(line, /@[0-9a-f]{40}(?:\s+#\s+v[\w.-]+)?$/, `action is not SHA-pinned: ${line.trim()}`);
-    }
-
-    const checkoutStart = yaml.indexOf("uses: actions/checkout@");
-    assert.notEqual(checkoutStart, -1, "actions/checkout is missing");
-    const nextStep = yaml.indexOf("\n      - name:", checkoutStart);
-    const checkoutStep = yaml.slice(checkoutStart, nextStep === -1 ? undefined : nextStep);
-    assert.match(checkoutStep, /\n\s+with:\s*\n\s+persist-credentials:\s+false\b/, "checkout must disable persisted credentials");
-
-    for (const block of workflowRunBlocks(yaml)) {
-      assert.ok(!block.includes("${{"), "run directly interpolates a GitHub expression");
-      for (const install of block.matchAll(/(?:^|\n)\s*((?:npm|pnpm|yarn|bun)\s+(?:install|ci)[^\n]*)/g)) {
-        assert.match(install[1], /(?:--ignore-scripts|--enable-scripts=false)\b/, `install runs lifecycle scripts: ${install[1]}`);
-      }
-    }
   });
 }
 
@@ -296,6 +286,15 @@ test("remote registries require immutable commit revisions", () => {
     "0123456789abcdef0123456789abcdef01234567",
   );
   assert.throws(() => assertFullCommitSha("main"), /full 40-character commit SHA/);
+  assert.equal(
+    registryCloneUrl("jongio/gh-pages-templates"),
+    "https://github.com/jongio/gh-pages-templates.git",
+  );
+  assert.equal(
+    registryCloneUrl("https://github.com/jongio/gh-pages-templates.git"),
+    "https://github.com/jongio/gh-pages-templates.git",
+  );
+  assert.throws(() => registryCloneUrl("octocat/templates"), /must be jongio\/gh-pages-templates/);
   const root = mkdtempSync(join(tmpdir(), "ghp-registry-ref-"));
   try {
     const target = join(root, "site");
@@ -426,6 +425,7 @@ test("CLI success reports the created directory, base path, and URL", () => {
     assert.match(result.stdout, /base path:\s+\/catalog\//);
     assert.match(result.stdout, /site URL:\s+https:\/\/octocat\.github\.io\/catalog\//);
     assert.match(result.stdout, /repo's trunk branch/);
+    assert.match(result.stdout, /npm ci --ignore-scripts --no-audit --no-fund/);
   } finally {
     rmSync(root, { recursive: true, force: true });
   }

@@ -31,8 +31,10 @@ jobs:
         uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
         with:
           node-version: "24"
+          cache: npm
+          cache-dependency-path: package-lock.json
       - name: Install dependencies
-        run: npm install --ignore-scripts --no-audit --no-fund
+        run: npm ci --ignore-scripts --no-audit --no-fund
       - name: Build with Eleventy
         env:
           # The generator sets this to "/REPO/" for a project site, or "/" for a
@@ -51,7 +53,6 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 10
     permissions:
-      contents: read
       pages: write
       id-token: write
     environment:

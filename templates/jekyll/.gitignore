@@ -3,7 +3,6 @@ _site/
 .jekyll-cache/
 .jekyll-metadata
 # bundler
-Gemfile.lock
 vendor/
 .bundle/
 # macOS

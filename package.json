@@ -5,11 +5,18 @@
   "type": "module",
   "description": "A registry of ready-to-deploy GitHub Pages starter templates, with a browsable gallery (live previews) deployed to Pages.",
   "license": "MIT",
+  "engines": {
+    "node": ">=24.0.0",
+    "npm": ">=11.10.0"
+  },
   "scripts": {
     "build": "node scripts/build-site.mjs",
     "catalog": "node scripts/build-catalog.mjs",
     "validate": "node scripts/validate.mjs",
     "test": "node scripts/validate.mjs",
     "new": "node scripts/new-site.mjs"
+  },
+  "dependencies": {
+    "yaml": "2.9.0"
   }
 }

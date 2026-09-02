@@ -11,13 +11,15 @@ Site URL: __SITE_URL__
 - **Base path solved.** `site` and `base` in `astro.config.mjs` are set from your
   repo, and links use `import.meta.env.BASE_URL`, so a project site at
   `/REPO/` and a user site at `/` both work unchanged.
-- **Official deploy.** Uses `withastro/action` + `actions/deploy-pages` — the
-  flow Astro itself documents.
+- **Official deploy.** Uses pinned first-party Pages actions and a locked npm
+  install.
 
 ## Develop locally
 
+Requires Node.js 24 or later and npm 11.10 or later.
+
 ```sh
-npm install
+npm ci
 npm run dev      # http://localhost:4321
 npm run build    # outputs to dist/
 npm run preview  # serve the production build
