@@ -52,7 +52,7 @@ The generated site uses `__BASE_PATH__` and deploys to __SITE_URL__.
 
 1. Push the generated project to `__REPO_SLUG__`.
 2. In repository settings, set Pages source to **GitHub Actions**.
-3. Push to `__DEFAULT_BRANCH__` or run the workflow manually.
+3. Push to `__DEFAULT_BRANCH__` or run the workflow manually on that branch.
 
 The workflow grants top-level `contents: read`, build-job `pages: read`, and
 deploy-job `pages: write` plus `id-token: write`.

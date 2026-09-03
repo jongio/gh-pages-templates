@@ -17,6 +17,7 @@ concurrency:
 
 jobs:
   build:
+    if: github.ref == 'refs/heads/main'
     runs-on: ubuntu-latest
     timeout-minutes: 20
     permissions:
@@ -32,7 +33,9 @@ jobs:
         with:
           node-version: 24
           cache: npm
-          cache-dependency-path: package-lock.json
+          cache-dependency-path: |-
+            package-lock.json
+            templates/*/package-lock.json
       - name: Install validation dependencies
         run: npm ci --ignore-scripts --no-audit --no-fund
       - name: Setup Ruby (for the Jekyll preview)
@@ -40,6 +43,8 @@ jobs:
         with:
           ruby-version: "4.0"
           bundler-cache: false
+      - name: Validate
+        run: node scripts/validate.mjs
       - name: Configure Pages
         id: pages
         uses: actions/configure-pages@45bfe0192ca1faeb007ade9deae92b16b8254a0d # v6.0.0
@@ -55,6 +60,7 @@ jobs:
           path: site
 
   deploy:
+    if: github.ref == 'refs/heads/main'
     needs: build
     runs-on: ubuntu-latest
     timeout-minutes: 10

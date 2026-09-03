@@ -108,15 +108,16 @@ This repo deploys its own site to GitHub Pages:
 
 1. Push to `main`.
 2. **Settings → Pages → Source → GitHub Actions**.
-3. `.github/workflows/deploy.yml` checks out the repository, runs `build-site.mjs` to
-   regenerate the catalog and build the live previews into `site/preview/` (Ruby is
-   set up for the Jekyll preview), and publishes `site/`. The live URL appears in
-   the Actions run.
+3. `.github/workflows/deploy.yml` checks out the repository, runs the validation
+   script, then runs `build-site.mjs` to regenerate the catalog and build the live previews into
+   `site/preview/` (Ruby is set up for the Jekyll preview), and publishes `site/`.
+   The live URL appears in the Actions run.
 
 ## Validate / contribute
 
 ```sh
-node scripts/validate.mjs   # manifests + workflows + generator stamp checks
+npm test        # manifests, workflows, dependency policy, and generator checks
+npm run build   # clean build of all six previews; requires Node 24 and Ruby 4
 ```
 
 Add a template by dropping a folder under `templates/<name>/` with a
@@ -138,10 +139,14 @@ scripts/
   new-site.mjs             Generator — stamp a site, inject the base path
   build-catalog.mjs        Write site/templates.json from manifests
   build-site.mjs           Regenerate catalog + build previews into site/preview/
+  repository-workflow-security.mjs
+                            Enforce root workflow structure and approved actions
   validate.mjs             CI gate (manifests + workflows + stamp + catalog sync)
 .github/workflows/
-  deploy.yml               Build previews + deploy site/ to Pages
-  validate.yml             Validate templates on push/PR
+  codeql.yml                Scan JavaScript with CodeQL on PR/push/schedule/manual runs
+  deploy.yml               Build previews + deploy site/ from main to Pages
+  validate.yml             Validate on push/PR/manual; build previews off push
+.github/CODEOWNERS          Require owner review for the executable CI trust base
 ```
 
 ## License

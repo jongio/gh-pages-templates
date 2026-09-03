@@ -12,6 +12,7 @@ import { spawnSync } from "node:child_process";
 
 import {
   assertFullCommitSha,
+  assertNoSymlinks,
   assertSafeDestination,
   computeReplacements,
   listTemplates,
@@ -21,12 +22,31 @@ import {
   stampTemplate,
 } from "./new-site.mjs";
 import { validateWorkflowText } from "./workflow-security.mjs";
-import { dependencyInstallFor } from "./build-site.mjs";
+import {
+  validateCodeqlWorkflowText,
+  validateDeployWorkflowText,
+  validateRepositoryWorkflowTree,
+  validateValidationWorkflowText,
+} from "./repository-workflow-security.mjs";
+import {
+  assertAllPreviewsBuilt,
+  dependencyInstallFor,
+  resolvePreviewOutput,
+} from "./build-site.mjs";
 import { buildCatalog, serializeCatalog } from "./build-catalog.mjs";
 import { NPM_POLICY, validateTemplateDependencies } from "./template-dependencies.mjs";
 
 const ROOT = resolve(dirname(fileURLToPath(import.meta.url)), "..");
 const TEMPLATES_DIR = join(ROOT, "templates");
+const REQUIRED_CI_CODEOWNER_RULES = [
+  "/.github/ @jongio",
+  "/scripts/ @jongio",
+  "/templates/ @jongio",
+  "/.npmrc @jongio",
+  "/package.json @jongio",
+  "/package-lock.json @jongio",
+  "/.github/CODEOWNERS @jongio",
+];
 
 const TIERS = new Set(["static", "ssg", "spa", "data", "native"]);
 const REQUIRED_FIELDS = ["name", "title", "tagline", "description", "framework", "tier", "language", "needsBuild", "output", "basePathMechanism", "deploy", "tags", "features", "order"];
@@ -65,6 +85,19 @@ function assertNotIgnored(path) {
   const ignored = spawnSync("git", ["check-ignore", "--no-index", "--quiet", "--", path], { cwd: ROOT });
   if (ignored.status === null || ignored.status === 128) return;
   assert.equal(ignored.status, 1, `${path} is ignored`);
+}
+function validateCodeownersPolicy(source) {
+  const rules = source
+    .split(/\r?\n/)
+    .map((line) => line.trim())
+    .filter((line) => line !== "" && !line.startsWith("#"));
+  const finalRules = rules.slice(-REQUIRED_CI_CODEOWNER_RULES.length);
+  if (
+    finalRules.length !== REQUIRED_CI_CODEOWNER_RULES.length ||
+    finalRules.some((rule, index) => rule !== REQUIRED_CI_CODEOWNER_RULES[index])
+  ) {
+    throw new Error("CI security policy rules must be the final effective CODEOWNERS entries.");
+  }
 }
 function walk(dir) {
   const out = [];
@@ -148,7 +181,10 @@ test("runtime workflow validation rejects unsafe stamped workflows", () => {
     ["chained npm suppression", safe.replace("run: npm run build", "run: npm ci && echo --ignore-scripts"), /unsupported run command/],
     ["missing effective Pages permission", safe.replace(/^\s{6}pages:\s*read\r?\n/m, ""), /effective Pages access/],
     ["unapproved action", safe.replace(/actions\/checkout@([a-f0-9]{40})/, "octocat/checkout@$1"), /unapproved action/],
+    ["unapproved action commit", safe.replace(/actions\/checkout@[a-f0-9]{40}/, `actions/checkout@${"0".repeat(40)}`), /unapproved commit/],
     ["Docker action", safe.replace(/uses: actions\/checkout@[a-f0-9]{40}/, "uses: docker://alpine:latest"), /unsupported action syntax/],
+    ["missing build ref guard", safe.replace("    if: github.ref == 'refs/heads/__DEFAULT_BRANCH__'\n", ""), /invalid build ref guard/],
+    ["wrong deploy ref guard", safe.replace("  deploy:\n    if: github.ref == 'refs/heads/__DEFAULT_BRANCH__'", "  deploy:\n    if: always()"), /invalid deploy ref guard/],
     ["flow mapping", `${safe}\nevil: { permissions: write-all }\n`, /flow-style mapping/],
     ["flow-mapped Docker action", safe.replace(/uses: actions\/checkout@[a-f0-9]{40}/, "- { uses: docker://alpine:latest }"), /flow-style mapping/],
     ["YAML anchor", `${safe}\nevil: &unsafe value\n`, /anchor, alias, tag, or merge key/],
@@ -181,15 +217,242 @@ test("runtime workflow validation rejects unsafe stamped workflows", () => {
 });
 
 test("repository workflows use least-privilege credentials", () => {
+  assert.doesNotThrow(() => validateRepositoryWorkflowTree(ROOT));
+});
+
+test("CI security policy files require code-owner review", () => {
+  const codeowners = readFileSync(join(ROOT, ".github", "CODEOWNERS"), "utf8");
+  assert.doesNotThrow(() => validateCodeownersPolicy(codeowners));
+  assert.throws(
+    () => validateCodeownersPolicy(`${codeowners}\n* @attacker\n`),
+    /final effective CODEOWNERS entries/,
+  );
+});
+
+test("repository workflow validation rejects additional workflow files", () => {
+  const root = mkdtempSync(join(tmpdir(), "ghp-root-workflows-"));
+  const workflowRoot = join(root, ".github", "workflows");
+  mkdirSync(workflowRoot, { recursive: true });
+  try {
+    for (const file of ["codeql.yml", "deploy.yml", "validate.yml"]) {
+      writeFileSync(
+        join(workflowRoot, file),
+        readFileSync(join(ROOT, ".github", "workflows", file)),
+      );
+    }
+    assert.doesNotThrow(() => validateRepositoryWorkflowTree(root));
+    writeFileSync(join(workflowRoot, "bypass.yml"), "on: push\njobs: {}\n");
+    assert.throws(
+      () => validateRepositoryWorkflowTree(root),
+      /unsupported workflow files: bypass\.yml, codeql\.yml, deploy\.yml, validate\.yml/,
+    );
+  } finally {
+    rmSync(root, { recursive: true, force: true });
+  }
+});
+
+test("repository workflow validation rejects extra jobs and mutable actions", () => {
   const deploy = readFileSync(join(ROOT, ".github", "workflows", "deploy.yml"), "utf8");
-  assert.doesNotThrow(() => validateWorkflowText(deploy, ".github/workflows/deploy.yml"));
+  assert.throws(
+    () => validateDeployWorkflowText(
+      deploy.replace(
+        /jobs:\r?\n/,
+        "jobs:\n  bypass:\n    runs-on: ubuntu-latest\n    timeout-minutes: 1\n    steps:\n      - name: Bypass\n        run: curl https://example.invalid\n",
+      ),
+      "deploy-extra-job.yml",
+    ),
+    /unsupported jobs key bypass/,
+  );
 
   const validate = readFileSync(join(ROOT, ".github", "workflows", "validate.yml"), "utf8");
-  assert.match(validate, /^permissions:\r?\n  contents: read$/m);
-  assert.match(validate, /^    timeout-minutes:\s*\d+$/m);
-  assert.match(
-    validate,
-    /uses: actions\/checkout@[0-9a-f]{40}\s+#\s+v[\w.-]+\r?\n\s+with:\r?\n\s+persist-credentials: false/,
+  assert.throws(
+    () => validateValidationWorkflowText(
+      validate.replace(
+        /jobs:\r?\n/,
+        "jobs:\n  bypass:\n    runs-on: ubuntu-latest\n    timeout-minutes: 1\n    steps:\n      - name: Bypass\n        run: curl https://example.invalid\n",
+      ),
+      "validate-extra-job.yml",
+    ),
+    /unsupported jobs key bypass/,
+  );
+  assert.throws(
+    () => validateValidationWorkflowText(
+      validate.replace(/actions\/checkout@[0-9a-f]{40}/, "actions/checkout@v7"),
+      "validate-mutable-action.yml",
+    ),
+    /invalid Checkout action reference/,
+  );
+  assert.throws(
+    () => validateValidationWorkflowText(
+      validate.replace(
+        /actions\/checkout@[0-9a-f]{40}/,
+        `actions/checkout@${"0".repeat(40)}`,
+      ),
+      "validate-unapproved-action-commit.yml",
+    ),
+    /invalid Checkout action reference/,
+  );
+
+  const codeql = readFileSync(join(ROOT, ".github", "workflows", "codeql.yml"), "utf8");
+  assert.throws(
+    () => validateCodeqlWorkflowText(
+      codeql.replace(
+        /jobs:\r?\n/,
+        "jobs:\n  bypass:\n    runs-on: ubuntu-latest\n    timeout-minutes: 1\n    steps:\n      - name: Bypass\n        run: curl https://example.invalid\n",
+      ),
+      "codeql-extra-job.yml",
+    ),
+    /unsupported jobs key bypass/,
+  );
+});
+
+test("repository workflow validation rejects CI contract regressions", () => {
+  const deploy = readFileSync(join(ROOT, ".github", "workflows", "deploy.yml"), "utf8");
+  assert.throws(
+    () => validateDeployWorkflowText(
+      deploy.replace("            templates/*/package-lock.json", ""),
+      "deploy-root-cache-only.yml",
+    ),
+    /invalid Setup Node inputs/,
+  );
+  assert.throws(
+    () => validateDeployWorkflowText(
+      deploy.replace("      - name: Validate\n        run: node scripts/validate.mjs\n", ""),
+      "deploy-without-validation.yml",
+    ),
+    /invalid build step count/,
+  );
+  assert.throws(
+    () => validateDeployWorkflowText(
+      deploy.replace("    if: github.ref == 'refs/heads/main'\n", ""),
+      "deploy-without-build-ref-guard.yml",
+    ),
+    /invalid build ref guard/,
+  );
+  assert.throws(
+    () => validateDeployWorkflowText(
+      deploy.replace(
+        "  deploy:\n    if: github.ref == 'refs/heads/main'",
+        "  deploy:\n    if: always()",
+      ),
+      "deploy-without-deploy-ref-guard.yml",
+    ),
+    /invalid deploy ref guard/,
+  );
+
+  const validate = readFileSync(join(ROOT, ".github", "workflows", "validate.yml"), "utf8");
+  assert.throws(
+    () => validateValidationWorkflowText(
+      validate.replace("  push:\n    branches: [main]\n", ""),
+      "validate-without-push.yml",
+    ),
+    /push trigger/,
+  );
+  assert.throws(
+    () => validateValidationWorkflowText(
+      validate.replace("branches: [main]", "branches: [develop]"),
+      "validate-wrong-push-branch.yml",
+    ),
+    /invalid push trigger/,
+  );
+  assert.throws(
+    () => validateValidationWorkflowText(
+      validate.replace("cancel-in-progress: true", "cancel-in-progress: false"),
+      "validate-without-cancellation.yml",
+    ),
+    /invalid concurrency/,
+  );
+  assert.throws(
+    () => validateValidationWorkflowText(
+      validate.replace("            templates/*/package-lock.json", ""),
+      "validate-root-cache-only.yml",
+    ),
+    /invalid Setup Node inputs/,
+  );
+  assert.throws(
+    () => validateValidationWorkflowText(
+      validate.replace(
+        "      - name: Build all template previews\n        if: github.event_name != 'push'\n        env:\n          PAGES_BASE: /gh-pages-templates/\n          PAGES_REPO: jongio/gh-pages-templates\n        run: node scripts/build-site.mjs\n",
+        "",
+      ),
+      "validate-without-build.yml",
+    ),
+    /invalid validate step count/,
+  );
+  assert.throws(
+    () => validateValidationWorkflowText(
+      validate.replace("if: github.event_name != 'push'", "if: always()"),
+      "validate-build-on-push.yml",
+    ),
+    /invalid Build all template previews step/,
+  );
+
+  const codeql = readFileSync(join(ROOT, ".github", "workflows", "codeql.yml"), "utf8");
+  assert.throws(
+    () => validateCodeqlWorkflowText(
+      codeql.replace("security-events: write", "security-events: read"),
+      "codeql-read-only.yml",
+    ),
+    /invalid analyze permissions/,
+  );
+  assert.throws(
+    () => validateCodeqlWorkflowText(
+      codeql.replace("languages: javascript-typescript", "languages: ruby"),
+      "codeql-wrong-language.yml",
+    ),
+    /invalid Initialize CodeQL inputs/,
+  );
+  assert.throws(
+    () => validateCodeqlWorkflowText(
+      codeql.replace(/github\/codeql-action\/init@[0-9a-f]{40}/, "github/codeql-action/init@v4"),
+      "codeql-mutable-action.yml",
+    ),
+    /invalid Initialize CodeQL action reference/,
+  );
+  assert.throws(
+    () => validateCodeqlWorkflowText(
+      codeql.replace('cron: "17 3 * * 1"', 'cron: "17 3 * * *"'),
+      "codeql-daily.yml",
+    ),
+    /invalid schedule/,
+  );
+});
+
+test("repository workflow validation ignores security-neutral display labels", () => {
+  const validate = readFileSync(join(ROOT, ".github", "workflows", "validate.yml"), "utf8")
+    .replace("name: Validate templates", "name: Custom validation")
+    .replace("name: Checkout", "name: Fetch source");
+  assert.doesNotThrow(() => validateValidationWorkflowText(validate, "validate-labels.yml"));
+
+  const codeql = readFileSync(join(ROOT, ".github", "workflows", "codeql.yml"), "utf8")
+    .replace("name: CodeQL", "name: Security analysis")
+    .replace("name: Analyze (javascript-typescript)", "name: JavaScript scan");
+  assert.doesNotThrow(() => validateCodeqlWorkflowText(codeql, "codeql-labels.yml"));
+});
+
+test("template workflow validation rejects repository-only policy", () => {
+  const template = readFileSync(
+    join(TEMPLATES_DIR, "astro", ".github", "workflows", "deploy.yml"),
+    "utf8",
+  );
+  assert.throws(
+    () => validateWorkflowText(
+      template.replace(
+        "cache-dependency-path: package-lock.json",
+        "cache-dependency-path: |-\n            package-lock.json\n            templates/*/package-lock.json",
+      ),
+      "template-root-cache.yml",
+    ),
+    /invalid setup-node inputs/,
+  );
+});
+
+test("complete preview builds reject missing templates", () => {
+  const catalog = [{ name: "static-html" }, { name: "astro" }];
+  assert.doesNotThrow(() => assertAllPreviewsBuilt(["static-html", "astro"], catalog));
+  assert.throws(
+    () => assertAllPreviewsBuilt(["static-html"], catalog),
+    /Failed to build 1\/2 template previews: astro/,
   );
 });
 
@@ -238,6 +501,49 @@ test("template dependency policy rejects untrusted sources and lifecycle scripts
 test("site publication rejects filesystem roots", () => {
   const root = parse(resolve(".")).root;
   assert.throws(() => assertSafeDestination(root), /filesystem root/);
+});
+
+test("template manifests reject unsafe preview output paths", () => {
+  const root = mkdtempSync(join(tmpdir(), "ghp-manifest-output-"));
+  const template = join(root, "unsafe");
+  mkdirSync(template);
+  try {
+    for (const output of ["../outside", "/tmp/outside", "C:\\outside", ".\\dist", "dist\\nested"]) {
+      writeFileSync(
+        join(template, "template.json"),
+        JSON.stringify({ name: "unsafe", title: "Unsafe", tagline: "Unsafe", output }),
+      );
+      assert.throws(() => readManifest(template), /output must be a portable relative path inside the template/);
+    }
+  } finally {
+    rmSync(root, { recursive: true, force: true });
+  }
+});
+
+test("preview publication rejects files and escaping symbolic links", () => {
+  const root = mkdtempSync(join(tmpdir(), "ghp-preview-output-"));
+  const outside = mkdtempSync(join(tmpdir(), "ghp-preview-outside-"));
+  try {
+    const output = join(root, "dist");
+    mkdirSync(output);
+    assert.equal(resolvePreviewOutput(root, "dist"), output);
+
+    writeFileSync(join(root, "artifact.txt"), "not a directory");
+    assert.throws(() => resolvePreviewOutput(root, "artifact.txt"), /real directory/);
+
+    const nestedEscape = join(output, "escape");
+    symlinkSync(outside, nestedEscape, "dir");
+    assert.throws(() => resolvePreviewOutput(root, "dist"), /symbolic link/);
+    rmSync(nestedEscape);
+
+    const escape = join(root, "escape");
+    symlinkSync(outside, escape, "dir");
+    assert.throws(() => resolvePreviewOutput(root, "escape"), /outside its build root/);
+    assert.throws(() => assertNoSymlinks(root, "Site publication tree"), /symbolic link/);
+  } finally {
+    rmSync(root, { recursive: true, force: true });
+    rmSync(outside, { recursive: true, force: true });
+  }
 });
 
 for (const name of names) {

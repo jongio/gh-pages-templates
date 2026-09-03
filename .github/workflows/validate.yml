@@ -1,7 +1,6 @@
 name: Validate templates
 
-# Gates every push/PR: validates each template's manifest + Pages workflow and
-# that the generator stamps it with no leftover placeholders.
+# Gates every push/PR: validates each template and proves PR previews build.
 
 on:
   push:
@@ -12,10 +11,14 @@ on:
 permissions:
   contents: read
 
+concurrency:
+  group: validate-${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
 jobs:
   validate:
     runs-on: ubuntu-latest
-    timeout-minutes: 10
+    timeout-minutes: 20
     steps:
       - name: Checkout
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
@@ -26,8 +29,21 @@ jobs:
         with:
           node-version: 24
           cache: npm
-          cache-dependency-path: package-lock.json
+          cache-dependency-path: |-
+            package-lock.json
+            templates/*/package-lock.json
+      - name: Setup Ruby
+        uses: ruby/setup-ruby@95ef2b042f9d7a56d8268cba8559e2842e2ad01b # v1.321.0
+        with:
+          ruby-version: "4.0"
+          bundler-cache: false
       - name: Install validation dependencies
         run: npm ci --ignore-scripts --no-audit --no-fund
       - name: Validate
         run: node scripts/validate.mjs
+      - name: Build all template previews
+        if: github.event_name != 'push'
+        env:
+          PAGES_BASE: /gh-pages-templates/
+          PAGES_REPO: jongio/gh-pages-templates
+        run: node scripts/build-site.mjs

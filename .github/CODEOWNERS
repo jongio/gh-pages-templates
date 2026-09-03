@@ -1,0 +1,8 @@
+# Keep this block last because GitHub applies the last matching owner rule.
+/.github/ @jongio
+/scripts/ @jongio
+/templates/ @jongio
+/.npmrc @jongio
+/package.json @jongio
+/package-lock.json @jongio
+/.github/CODEOWNERS @jongio

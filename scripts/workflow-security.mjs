@@ -3,14 +3,14 @@ import { join, relative } from "node:path";
 import { parseDocument } from "yaml";
 
 const ACTION_SHA = /^[a-f0-9]{40}$/;
-const ALLOWED_ACTIONS = new Set([
-  "actions/checkout",
-  "actions/configure-pages",
-  "actions/deploy-pages",
-  "actions/jekyll-build-pages",
-  "actions/setup-node",
-  "actions/upload-pages-artifact",
-  "ruby/setup-ruby",
+const APPROVED_ACTION_SHAS = new Map([
+  ["actions/checkout", "3d3c42e5aac5ba805825da76410c181273ba90b1"],
+  ["actions/configure-pages", "45bfe0192ca1faeb007ade9deae92b16b8254a0d"],
+  ["actions/deploy-pages", "cd2ce8fcbc39b97be8ca5fce6e763baed58fa128"],
+  ["actions/jekyll-build-pages", "44a6e6beabd48582f863aeeb6cb2151cc1716697"],
+  ["actions/setup-node", "820762786026740c76f36085b0efc47a31fe5020"],
+  ["actions/upload-pages-artifact", "fc324d3547104276b827a68afc52ff2a11cc49c9"],
+  ["ruby/setup-ruby", "95ef2b042f9d7a56d8268cba8559e2842e2ad01b"],
 ]);
 const ALLOWED_TRIGGERS = new Set(["push", "workflow_dispatch"]);
 const ALLOWED_PERMISSIONS = new Map([
@@ -41,15 +41,6 @@ const ALLOWED_BUILD_SEQUENCES = new Set([
     "run:npm ci --ignore-scripts --no-audit --no-fund",
     "run:npm run build",
     "uses:actions/configure-pages",
-    "uses:actions/upload-pages-artifact",
-  ]),
-  JSON.stringify([
-    "uses:actions/checkout",
-    "uses:actions/setup-node",
-    "run:npm ci --ignore-scripts --no-audit --no-fund",
-    "uses:ruby/setup-ruby",
-    "uses:actions/configure-pages",
-    "run:node scripts/build-site.mjs",
     "uses:actions/upload-pages-artifact",
   ]),
 ]);
@@ -282,8 +273,12 @@ function validateActionReferences(lines, file) {
     if (!action) throw new Error(`${file} uses unsupported action syntax.`);
     if (!ACTION_SHA.test(action[2])) throw new Error(`${file} has an unpinned action.`);
     const actionName = action[1].toLowerCase();
-    if (!ALLOWED_ACTIONS.has(actionName)) {
+    const approvedSha = APPROVED_ACTION_SHAS.get(actionName);
+    if (approvedSha === undefined) {
       throw new Error(`${file} uses unapproved action ${action[1]}.`);
+    }
+    if (action[2] !== approvedSha) {
+      throw new Error(`${file} uses an unapproved commit for ${action[1]}.`);
     }
     if (actionName === "actions/configure-pages") {
       validateConfigurePagesAccess(lines, index, file);
@@ -328,7 +323,7 @@ function requireRecord(value, file, label) {
   return value;
 }
 
-function requireExactKeys(value, allowed, file, label) {
+export function requireExactKeys(value, allowed, file, label) {
   const record = requireRecord(value, file, label);
   const unexpected = Object.keys(record).filter((key) => !allowed.includes(key));
   if (unexpected.length > 0) {
@@ -345,13 +340,25 @@ function requirePermissions(actual, expected, file, label) {
   }
 }
 
-function parseActionReference(reference, file) {
+export function requireApprovedActionReference(reference, {
+  expectedAction,
+  expectedSha,
+  file,
+  label = "parsed",
+}) {
   if (typeof reference !== "string") throw new Error(`${file} has a non-string action reference.`);
   const match = reference.match(/^([^@\s]+)@([a-f0-9]{40})$/);
-  if (!match || !ALLOWED_ACTIONS.has(match[1].toLowerCase())) {
-    throw new Error(`${file} has an invalid parsed action reference.`);
+  const action = match?.[1].toLowerCase();
+  const approvedSha = expectedSha ?? APPROVED_ACTION_SHAS.get(action);
+  if (
+    !match ||
+    action !== expectedAction ||
+    approvedSha === undefined ||
+    match[2] !== approvedSha
+  ) {
+    throw new Error(`${file} has an invalid ${label} action reference.`);
   }
-  return match[1].toLowerCase();
+  return action;
 }
 
 function validateActionInputs(action, inputs, file) {
@@ -361,7 +368,12 @@ function validateActionInputs(action, inputs, file) {
     if (checkout["persist-credentials"] !== false) throw new Error(`${file} must disable checkout credentials.`);
   } else if (action === "actions/setup-node") {
     const node = requireExactKeys(value, ["node-version", "cache", "cache-dependency-path"], file, `${action} inputs`);
-    if (String(node["node-version"]) !== "24" || node.cache !== "npm" || node["cache-dependency-path"] !== "package-lock.json") {
+    const dependencyPath = node["cache-dependency-path"];
+    if (
+      String(node["node-version"]) !== "24" ||
+      node.cache !== "npm" ||
+      dependencyPath !== "package-lock.json"
+    ) {
       throw new Error(`${file} has invalid setup-node inputs.`);
     }
   } else if (action === "ruby/setup-ruby") {
@@ -387,13 +399,12 @@ function validateActionInputs(action, inputs, file) {
 
 function validateStepEnvironment(environment, file) {
   if (environment === undefined) return;
-  const env = requireExactKeys(environment, ["PATH_PREFIX", "PAGES_BASE", "PAGES_REPO"], file, "step environment");
+  const env = requireExactKeys(environment, ["PATH_PREFIX"], file, "step environment");
   for (const [name, value] of Object.entries(env)) {
-    const valid = name === "PATH_PREFIX"
-      ? typeof value === "string" && (/^\/(?:[A-Za-z0-9._-]+\/)*$/.test(value) || value === "__BASE_PATH__")
-      : name === "PAGES_BASE"
-        ? value === "${{ steps.pages.outputs.base_path }}"
-        : value === "${{ github.repository }}";
+    const valid =
+      name === "PATH_PREFIX" &&
+      typeof value === "string" &&
+      (/^\/(?:[A-Za-z0-9._-]+\/)*$/.test(value) || value === "__BASE_PATH__");
     if (!valid) throw new Error(`${file} has unsafe environment value ${name}.`);
   }
 }
@@ -407,7 +418,12 @@ function validateParsedStep(step, file) {
 
   if (hasAction) {
     if (value.env !== undefined) throw new Error(`${file} passes environment variables to an action.`);
-    const action = parseActionReference(value.uses, file);
+    const actionReference = value.uses.match(/^([^@\s]+)@/);
+    const action = actionReference?.[1].toLowerCase();
+    requireApprovedActionReference(value.uses, {
+      expectedAction: action,
+      file,
+    });
     validateActionInputs(action, value.with, file);
     return `uses:${action}`;
   }
@@ -421,8 +437,8 @@ function validateParsedStep(step, file) {
 
 function validateParsedJob(job, expectedPermissions, file, label) {
   const allowed = label === "deploy"
-    ? ["needs", "runs-on", "timeout-minutes", "permissions", "environment", "steps"]
-    : ["runs-on", "timeout-minutes", "permissions", "steps"];
+    ? ["if", "needs", "runs-on", "timeout-minutes", "permissions", "environment", "steps"]
+    : ["if", "runs-on", "timeout-minutes", "permissions", "steps"];
   const value = requireExactKeys(job, allowed, file, `${label} job`);
   if (value["runs-on"] !== "ubuntu-latest" || !Number.isInteger(value["timeout-minutes"]) || value["timeout-minutes"] < 1) {
     throw new Error(`${file} has invalid ${label} runner settings.`);
@@ -471,12 +487,19 @@ function validateParsedWorkflow(source, file) {
 
   const jobs = requireExactKeys(workflow.jobs, ["build", "deploy"], file, "jobs");
   const build = validateParsedJob(jobs.build, { contents: "read", pages: "read" }, file, "build");
+  const deployRefCondition = `github.ref == 'refs/heads/${push.branches[0]}'`;
+  if (build.if !== deployRefCondition) {
+    throw new Error(`${file} has an invalid build ref guard.`);
+  }
   const buildSequence = build.steps.map((step) => validateParsedStep(step, file));
   if (!ALLOWED_BUILD_SEQUENCES.has(JSON.stringify(buildSequence))) {
     throw new Error(`${file} has an unsupported build step sequence.`);
   }
 
   const deploy = validateParsedJob(jobs.deploy, { pages: "write", "id-token": "write" }, file, "deploy");
+  if (deploy.if !== deployRefCondition) {
+    throw new Error(`${file} has an invalid deploy ref guard.`);
+  }
   const environment = requireExactKeys(deploy.environment, ["name", "url"], file, "deployment environment");
   if (
     deploy.needs !== "build" ||
@@ -491,9 +514,14 @@ function validateParsedWorkflow(source, file) {
   }
 }
 
-export function validateWorkflowText(yaml, file = "workflow") {
+export function validateWorkflowYamlShape(yaml, file = "workflow") {
   const lines = yaml.replace(/\r\n?/g, "\n").split("\n");
   validateYamlShape(lines, file);
+}
+
+export function validateWorkflowText(yaml, file = "workflow") {
+  const lines = yaml.replace(/\r\n?/g, "\n").split("\n");
+  validateWorkflowYamlShape(yaml, file);
   validateTriggers(lines, file);
   validatePermissions(lines, file);
   validatePrivilegedJobs(lines, file);

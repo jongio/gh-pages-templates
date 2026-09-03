@@ -27,7 +27,7 @@
 
 import { existsSync, readdirSync, readFileSync, writeFileSync, lstatSync, cpSync, mkdirSync, rmSync, mkdtempSync, renameSync } from "node:fs";
 import { randomUUID } from "node:crypto";
-import { join, resolve, dirname, basename, relative, isAbsolute, parse, sep } from "node:path";
+import { join, resolve, dirname, basename, relative, isAbsolute, parse, posix, sep, win32 } from "node:path";
 import { fileURLToPath } from "node:url";
 import { execFileSync } from "node:child_process";
 import { tmpdir } from "node:os";
@@ -143,7 +143,7 @@ export function assertFullCommitSha(ref) {
   return String(ref).toLowerCase();
 }
 
-function resolveInside(root, child, label = "Path") {
+export function resolveInside(root, child, label = "Path") {
   const resolvedRoot = resolve(root);
   const resolvedChild = resolve(resolvedRoot, child);
   const rel = relative(resolvedRoot, resolvedChild);
@@ -278,6 +278,17 @@ export function readManifest(templateDir) {
   if (manifest.name !== basename(templateDir)) {
     throw new Error(`Invalid template manifest ${file}: name must match its directory.`);
   }
+  if (
+    typeof manifest.output !== "string" ||
+    !manifest.output ||
+    manifest.output.includes("\0") ||
+    manifest.output.includes("\\") ||
+    posix.isAbsolute(manifest.output) ||
+    win32.isAbsolute(manifest.output) ||
+    manifest.output.split(/[\\/]/).includes("..")
+  ) {
+    throw new Error(`Invalid template manifest ${file}: output must be a portable relative path inside the template.`);
+  }
   return manifest;
 }
 
@@ -294,12 +305,12 @@ function copyTemplate(srcDir, destDir) {
   });
 }
 
-function assertNoSymlinks(root) {
+export function assertNoSymlinks(root, label = "Template") {
   const stack = [resolve(root)];
   while (stack.length) {
     const current = stack.pop();
     const stat = lstatSync(current);
-    if (stat.isSymbolicLink()) throw new Error(`Template contains a symbolic link: ${current}`);
+    if (stat.isSymbolicLink()) throw new Error(`${label} contains a symbolic link: ${current}`);
     if (!stat.isDirectory()) continue;
     for (const entry of readdirSync(current)) stack.push(join(current, entry));
   }

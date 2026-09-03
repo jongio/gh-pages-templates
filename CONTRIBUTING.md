@@ -40,6 +40,9 @@ into a stamped site (the generator excludes them).
 }
 ```
 
+`output` must name a POSIX-style relative directory inside the stamped template. Absolute,
+traversing, file, and symbolic-link outputs are rejected before publication.
+
 After editing manifests, regenerate the committed catalog:
 
 ```sh
@@ -81,6 +84,7 @@ Every `deploy.yml` MUST declare:
 - top-level `permissions: { contents: read }`
 - build-job `permissions: { contents: read, pages: read }`
 - deploy-job `permissions: { pages: write, id-token: write }`
+- both jobs guarded to `refs/heads/__DEFAULT_BRANCH__`
 - exactly one `actions/deploy-pages` step in the privileged deploy job
 - `persist-credentials: false` on checkout steps
 - a timeout on every runner job
@@ -95,6 +99,7 @@ Every `deploy.yml` MUST declare:
 
 ```sh
 npm test                                   # validate.mjs: manifests + workflows + stamp + catalog sync
+npm run build                              # build all six previews; requires Node 24 and Ruby 4
 node scripts/new-site.mjs my-template --repo octocat/demo --dir /tmp/x
 cd /tmp/x && npm ci --ignore-scripts && npm run build  # if it builds
 ```

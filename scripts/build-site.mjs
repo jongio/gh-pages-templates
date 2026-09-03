@@ -12,16 +12,30 @@
 // Previews need the real base, taken from PAGES_BASE (e.g. "/gh-pages-templates/");
 // defaults to "/" for local runs.  Usage:  node scripts/build-site.mjs
 //
-// Previews that need a toolchain that isn't installed (e.g. Ruby for Jekyll) are
-// skipped gracefully; the card still links to where the preview will be in CI.
+// Missing toolchains and failed preview builds are reported individually, then
+// fail the complete build. CI installs every required toolchain.
 
-import { existsSync, rmSync, mkdirSync, cpSync, writeFileSync, mkdtempSync } from "node:fs";
-import { join, resolve, dirname, basename } from "node:path";
+import {
+  cpSync,
+  existsSync,
+  lstatSync,
+  mkdirSync,
+  mkdtempSync,
+  realpathSync,
+  rmSync,
+  writeFileSync,
+} from "node:fs";
+import { basename, dirname, isAbsolute, join, relative, resolve, sep } from "node:path";
 import { fileURLToPath } from "node:url";
 import { tmpdir } from "node:os";
 import { spawnSync } from "node:child_process";
 
-import { stampTemplate, normalizeBase } from "./new-site.mjs";
+import {
+  assertNoSymlinks,
+  normalizeBase,
+  resolveInside,
+  stampTemplate,
+} from "./new-site.mjs";
 import { buildCatalog, serializeCatalog } from "./build-catalog.mjs";
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
@@ -47,6 +61,37 @@ export function dependencyInstallFor(manifest) {
     args: ["ci", "--ignore-scripts", "--no-audit", "--no-fund", "--loglevel=error"],
     env: {},
   };
+}
+
+export function assertAllPreviewsBuilt(built, catalog) {
+  const builtNames = new Set(built);
+  const failed = catalog.map((template) => template.name).filter((name) => !builtNames.has(name));
+  if (failed.length > 0) {
+    throw new Error(`Failed to build ${failed.length}/${catalog.length} template previews: ${failed.join(", ")}`);
+  }
+}
+
+export function resolvePreviewOutput(root, output) {
+  const outputPath = resolveInside(root, output, "Preview output");
+  if (!existsSync(outputPath)) {
+    throw new Error(`Expected preview output ${output} was not found.`);
+  }
+  const realRoot = realpathSync(root);
+  const realOutput = realpathSync(outputPath);
+  const relativeOutput = relative(realRoot, realOutput);
+  if (
+    relativeOutput === ".." ||
+    relativeOutput.startsWith(`..${sep}`) ||
+    isAbsolute(relativeOutput)
+  ) {
+    throw new Error(`Preview output resolves outside its build root: ${output}`);
+  }
+  const stat = lstatSync(outputPath);
+  if (stat.isSymbolicLink() || !stat.isDirectory()) {
+    throw new Error(`Preview output must be a real directory: ${output}`);
+  }
+  assertNoSymlinks(outputPath, "Preview output");
+  return outputPath;
 }
 
 function run(cmd, args, cwd, extraEnv = {}) {
@@ -110,8 +155,7 @@ function buildPreview(template, manifest) {
       if (r.status !== 0) { console.warn(`  • ${name}: build failed\n${r.stderr || r.stdout}`); return false; }
     }
 
-    const built = join(dir, manifest.output);
-    if (!existsSync(built)) { console.warn(`  • ${name}: expected output ${manifest.output} not found`); return false; }
+    const built = resolvePreviewOutput(dir, manifest.output);
     mkdirSync(out, { recursive: true });
     copyDir(built, out);
     console.log(`  • ${name}: preview built (${manifest.output})`);
@@ -126,6 +170,7 @@ function buildPreview(template, manifest) {
 
 function main() {
   console.log(`Building site (base ${PAGES_BASE}, repo ${REPO})`);
+  assertNoSymlinks(SITE, "Site publication tree");
 
   // 1. Regenerate the catalog from the manifests so the deployed site is fresh.
   const catalog = buildCatalog();
@@ -141,6 +186,8 @@ function main() {
   const built = catalog.filter((t) => buildPreview(t.name, t)).map((t) => t.name);
 
   console.log(`\nsite/preview ready — ${built.length}/${catalog.length} live previews: ${built.join(", ") || "(none)"}`);
+  assertAllPreviewsBuilt(built, catalog);
+  assertNoSymlinks(SITE, "Site publication tree");
 }
 
 if (process.argv[1] && resolve(process.argv[1]) === resolve(fileURLToPath(import.meta.url))) {
