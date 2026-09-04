@@ -35,7 +35,7 @@ bundle exec jekyll serve   # http://localhost:4000
 
 ## Structure
 
-```
+```text
 _config.yml             site config + baseurl
 index.html              home (lists site.posts)
 about.md                about page (permalink: /about/)

@@ -6,6 +6,7 @@
   "framework": "VitePress",
   "tier": "ssg",
   "language": "TypeScript",
+  "thumbnail": "assets/thumbnails/spectator.png",
   "needsBuild": true,
   "build": "vitepress build docs",
   "output": "docs/.vitepress/dist",

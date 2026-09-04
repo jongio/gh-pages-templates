@@ -6,6 +6,7 @@
   "framework": "Eleventy",
   "tier": "data",
   "language": "JavaScript",
+  "thumbnail": "assets/thumbnails/eleventy.png",
   "needsBuild": true,
   "build": "eleventy",
   "output": "_site",

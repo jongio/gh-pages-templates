@@ -7,8 +7,7 @@ Each template ships the current official GitHub Actions Pages workflow and the
 correct **base-path** setup, so it deploys correctly to a user site (`/`) or a
 project site (`/repo/`) with no fiddling.
 
-> Browse the gallery: **https://jongio.github.io/gh-pages-templates/** *(after
-> the first deploy — see [Deploy the site](#deploy-the-site))*.
+> Browse the gallery: **https://jongio.github.io/gh-pages-templates/**.
 
 ## Templates
 
@@ -45,6 +44,10 @@ npx skills add jongio/skills --skill create-gh-pages-site -g --agent github-copi
 
 Then reload with `/skills reload` (or start a new session) and describe the site
 you want — it scaffolds from this registry:
+
+Every catalog card uses a generated 1024 by 1024 thumbnail. Prompt provenance
+and the Azure GPT Image 2 generation command live in
+[`docs/thumbnail-prompts.md`](docs/thumbnail-prompts.md).
 
 ```text
 /create-gh-pages-site an Astro blog for octocat/blog
@@ -142,7 +145,12 @@ scripts/
   build-site.mjs           Regenerate catalog + build previews into site/preview/
   repository-workflow-security.mjs
                             Enforce root workflow structure and approved actions
-  validate.mjs             CI gate (manifests + workflows + stamp + catalog sync)
+  generate-thumbnails.mjs  Generate gallery thumbnails with Azure GPT Image 2
+  thumbnail-prompts.json   Reproducible thumbnail prompt source
+  validate.mjs             CI gate (manifests, workflows, stamping, catalog, previews)
+docs/
+  thumbnail-prompts.md     Generated thumbnail provenance and reproduction guide
+site/assets/thumbnails/    One 1024px PNG per template
 .github/workflows/
   codeql.yml                Scan JavaScript with CodeQL on PR/push/schedule/manual runs
   deploy.yml               Build previews + deploy site/ from main to Pages

@@ -41,7 +41,7 @@ PATH_PREFIX="/my-repo/" npm run build
 
 ## Structure
 
-```
+```text
 eleventy.config.js    input/output dirs + pathPrefix (from PATH_PREFIX)
 src/
   index.njk           home

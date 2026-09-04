@@ -154,7 +154,8 @@ npx skills add jongio/skills --skill create-gh-pages-site</code></pre>
           <code>templates/&lt;name&gt;/</code> containing:
         </p>
         <ul>
-          <li>a <code>template.json</code> manifest (title, tier, framework, base-path mechanism, tags);</li>
+          <li>a <code>template.json</code> manifest (title, tier, framework, thumbnail, base-path mechanism, tags);</li>
+          <li>a 1024 by 1024 PNG at <code>site/assets/thumbnails/&lt;name&gt;.png</code> with prompt provenance;</li>
           <li>a <code>.github/workflows/deploy.yml</code> using the official GitHub Pages actions;</li>
           <li>base-path handling via the <code>__BASE_PATH__</code> / <code>__BASE_URL__</code> sentinels;</li>
           <li>a short <code>README.md</code>.</li>

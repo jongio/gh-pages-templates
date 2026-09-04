@@ -6,6 +6,7 @@
   "framework": "Astro",
   "tier": "ssg",
   "language": "JavaScript",
+  "thumbnail": "assets/thumbnails/astro.png",
   "needsBuild": true,
   "build": "astro build",
   "output": "dist",

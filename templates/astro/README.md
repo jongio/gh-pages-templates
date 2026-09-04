@@ -35,7 +35,7 @@ npm run preview  # serve the production build
 
 ## Structure
 
-```
+```text
 astro.config.mjs           site + base for GitHub Pages
 src/
   pages/                   file-based routes (index.astro, about.astro)

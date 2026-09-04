@@ -36,7 +36,7 @@ npx serve .
 
 ## Structure
 
-```
+```text
 index.html        Landing page + feature showcase
 about.html        Second page (what the template demonstrates)
 404.html          Custom not-found page
@@ -47,4 +47,3 @@ assets/
 .nojekyll         Serve files as-is (skip Jekyll)
 .github/workflows/deploy.yml   Pages deploy workflow
 ```
-

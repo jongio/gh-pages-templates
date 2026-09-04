@@ -6,7 +6,7 @@ automatically.
 
 ## Anatomy of a template
 
-```
+```text
 templates/<name>/
   template.json                 Manifest (required — see below)
   .github/workflows/deploy.yml  Pages deploy workflow (required)
@@ -30,18 +30,25 @@ templates/<name>/
   "framework": "Svelte",              // human-readable
   "tier": "ssg",                      // static | ssg | spa | data | native
   "language": "JavaScript",
+  "thumbnail": "assets/thumbnails/my-template.png",
   "needsBuild": true,                 // false for zero-build static
   "build": "vite build",              // build command, or null
   "output": "dist",                   // build output dir, or "." for static
   "basePathMechanism": "base in svelte.config.js",
   "deploy": "configure-pages + upload-pages-artifact + deploy-pages",
   "tags": ["svelte", "ssg"],
+  "features": ["Light/dark toggle", "GitHub source link"],
   "order": 6                          // catalog sort order
 }
 ```
 
 `output` must name a POSIX-style relative directory inside the stamped template. Absolute,
 traversing, file, and symbolic-link outputs are rejected before publication.
+
+Every template needs a 1024 by 1024 PNG thumbnail at
+`site/assets/thumbnails/<name>.png`. Use the shared Azure GPT Image 2 process
+documented in `docs/thumbnail-prompts.md`, and add the exact prompt to
+`scripts/thumbnail-prompts.json`.
 
 After editing manifests, regenerate the committed catalog:
 
@@ -78,11 +85,13 @@ for pages and public assets, and verify both `/` and a nested project base.
 
 Use the official **GitHub Actions** Pages flow (Source = "GitHub Actions"):
 
-```
+```text
 actions/configure-pages@v6 → build → actions/upload-pages-artifact@v5 → actions/deploy-pages@v5
 ```
 
-Use current supported action releases and pin every action to its full commit SHA.
+Use current supported action releases. New templates should pin every action to
+its full commit SHA. The creation skill normalizes known legacy action tags to
+reviewed immutable pins before applying a template.
 
 Every `deploy.yml` MUST declare:
 

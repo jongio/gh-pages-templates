@@ -36,7 +36,7 @@ npm run preview  # serve the production build at the configured base
 
 ## Structure
 
-```
+```text
 vite.config.js       base path for GitHub Pages
 index.html           Vite entry HTML
 copy-404.mjs         postbuild SPA fallback (dist/index.html → dist/404.html)

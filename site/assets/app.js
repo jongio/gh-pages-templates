@@ -58,6 +58,14 @@ function cmdRow(text) {
 }
 
 function card(t) {
+  const thumbnail = el("img", {
+    class: "template-thumb",
+    src: `./${t.thumbnail}`,
+    alt: `${t.title} template thumbnail`,
+    loading: "lazy",
+    width: "1024",
+    height: "1024",
+  });
   const head = el("div", { class: "card-head" },
     el("h3", { text: t.title }),
     el("span", { class: `badge badge-${t.tier}`, text: TIER_LABEL[t.tier] || t.tier }),
@@ -85,6 +93,7 @@ function card(t) {
   );
 
   return el("article", { class: "card", "data-template": t.name },
+    thumbnail,
     head,
     el("p", { class: "tagline", text: t.tagline }),
     el("p", { class: "desc", text: t.description }),

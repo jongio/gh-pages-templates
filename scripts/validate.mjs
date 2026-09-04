@@ -48,8 +48,16 @@ const REQUIRED_CI_CODEOWNER_RULES = [
   "/.github/CODEOWNERS @jongio",
 ];
 
+const THUMBNAIL_PROMPTS = JSON.parse(
+  readFileSync(join(ROOT, "scripts", "thumbnail-prompts.json"), "utf8"),
+);
+const THUMBNAIL_DOCS = readFileSync(
+  join(ROOT, "docs", "thumbnail-prompts.md"),
+  "utf8",
+);
+
 const TIERS = new Set(["static", "ssg", "spa", "data", "native"]);
-const REQUIRED_FIELDS = ["name", "title", "tagline", "description", "framework", "tier", "language", "needsBuild", "output", "basePathMechanism", "deploy", "tags", "features", "order"];
+const REQUIRED_FIELDS = ["name", "title", "tagline", "description", "framework", "tier", "language", "thumbnail", "needsBuild", "output", "basePathMechanism", "deploy", "tags", "features", "order"];
 const SENTINELS = [
   "__SITE_NAME__",
   "__SITE_DESCRIPTION__",
@@ -561,6 +569,18 @@ for (const name of names) {
     assert.equal(typeof m.order, "number");
     assert.ok(Array.isArray(m.tags) && m.tags.length > 0);
   });
+  test(`${name}: thumbnail is a 1024px PNG in the gallery`, () => {
+    assert.match(
+      m.thumbnail,
+      new RegExp(`^assets/thumbnails/${name.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")}\\.png$`),
+    );
+    const thumbnail = join(ROOT, "site", m.thumbnail);
+    assert.ok(existsSync(thumbnail), `missing ${thumbnail}`);
+    const bytes = readFileSync(thumbnail);
+    assert.deepEqual([...bytes.subarray(0, 8)], [137, 80, 78, 71, 13, 10, 26, 10]);
+    assert.equal(bytes.readUInt32BE(16), 1024, "thumbnail width");
+    assert.equal(bytes.readUInt32BE(20), 1024, "thumbnail height");
+  });
 
   if (m.needsBuild) {
     test(`${name}: dependency sources, locks, runtimes, and scripts meet policy`, () => {
@@ -864,6 +884,22 @@ test("buildCatalog is serializable and sorted by order", () => {
 test("every template documents features for the gallery", () => {
   for (const t of catalog) {
     assert.ok(Array.isArray(t.features) && t.features.length > 0, `${t.name} has no features[]`);
+  }
+});
+test("thumbnail prompts and provenance cover every template", () => {
+  assert.equal(THUMBNAIL_PROMPTS.model, "gpt-image-2");
+  assert.equal(THUMBNAIL_PROMPTS.size, "1024x1024");
+  assert.deepEqual(
+    THUMBNAIL_PROMPTS.images.map((image) => image.id).sort(),
+    [...names].sort(),
+  );
+  assert.ok(THUMBNAIL_DOCS.includes(THUMBNAIL_PROMPTS.style));
+  for (const image of THUMBNAIL_PROMPTS.images) {
+    assert.ok(THUMBNAIL_DOCS.includes(image.prompt), `docs missing ${image.id} prompt`);
+    assert.ok(
+      THUMBNAIL_DOCS.includes(`site/assets/thumbnails/${image.file}`),
+      `docs missing ${image.file} output`,
+    );
   }
 });
 test("site/templates.json is committed and in sync with the manifests", () => {
