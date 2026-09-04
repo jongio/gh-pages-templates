@@ -7,8 +7,7 @@ Each template ships the current official GitHub Actions Pages workflow and the
 correct **base-path** setup, so it deploys correctly to a user site (`/`) or a
 project site (`/repo/`) with no fiddling.
 
-> Browse the gallery: **https://jongio.github.io/gh-pages-templates/** *(after
-> the first deploy — see [Deploy the site](#deploy-the-site))*.
+> Browse the gallery: **https://jongio.github.io/gh-pages-templates/**.
 
 ## Templates
 
@@ -20,6 +19,7 @@ project site (`/repo/`) with no fiddling.
 | `eleventy` | data/Markdown-driven sites | `pathPrefix` via env + `url` filter | `eleventy` |
 | `jekyll` | GitHub-native / existing Jekyll | `baseurl` in `_config.yml` | Jekyll |
 | `skills-catalog` | searchable agent skill marketplaces | `base` in `astro.config.mjs` | `astro build` |
+| `spectator` | reviewable specifications and technical proposals | VitePress `base` | `vitepress build` |
 
 All deploy via the GitHub Actions Pages source using the current first-party
 actions (`configure-pages@v6`, `upload-pages-artifact@v5`, and
@@ -44,6 +44,10 @@ npx skills add jongio/skills --skill create-gh-pages-site -g --agent github-copi
 
 Then reload with `/skills reload` (or start a new session) and describe the site
 you want — it scaffolds from this registry:
+
+Every catalog card uses a generated 1024 by 1024 thumbnail. Prompt provenance
+and the Azure GPT Image 2 generation command live in
+[`docs/thumbnail-prompts.md`](docs/thumbnail-prompts.md).
 
 ```text
 /create-gh-pages-site an Astro blog for octocat/blog
@@ -117,13 +121,13 @@ This repo deploys its own site to GitHub Pages:
 
 ```sh
 npm test        # manifests, workflows, dependency policy, and generator checks
-npm run build   # clean build of all six previews; requires Node 24 and Ruby 4
+npm run build   # clean build of all seven previews; requires Node 24 and Ruby 4
 ```
 
 Add a template by dropping a folder under `templates/<name>/` with a
-`template.json` manifest, a `.github/workflows/deploy.yml`, and base-path handling
-via the generator's sentinels — see [`CONTRIBUTING.md`](CONTRIBUTING.md). CI
-(`validate.yml`) gates every PR.
+`template.json` manifest, a gallery thumbnail, a `.github/workflows/deploy.yml`,
+and base-path handling via the generator's sentinels — see
+[`CONTRIBUTING.md`](CONTRIBUTING.md). CI (`validate.yml`) gates every PR.
 
 ## Layout
 
@@ -132,7 +136,10 @@ templates/<name>/          Registry source (with __SENTINEL__ placeholders)
   template.json            Manifest (site catalog + generator read this)
   .github/workflows/deploy.yml
 site/                      The site — committed source you edit + deploy
-  index.html  assets/      Browse UI (static, base-path-proof)
+  index.html               Browse UI (static, base-path-proof)
+  assets/
+    app.js  styles.css
+    thumbnails/            One generated 1024px PNG per template
   templates.json           Catalog (generated from manifests by build-catalog.mjs)
   preview/                 Live template previews (gitignored; built by build-site.mjs)
 scripts/
@@ -141,7 +148,11 @@ scripts/
   build-site.mjs           Regenerate catalog + build previews into site/preview/
   repository-workflow-security.mjs
                             Enforce root workflow structure and approved actions
-  validate.mjs             CI gate (manifests + workflows + stamp + catalog sync)
+  generate-thumbnails.mjs  Generate gallery thumbnails with Azure GPT Image 2
+  thumbnail-prompts.json   Reproducible thumbnail prompt source
+  validate.mjs             CI gate (manifests, workflows, stamping, catalog, previews)
+docs/
+  thumbnail-prompts.md     Generated thumbnail provenance and reproduction guide
 .github/workflows/
   codeql.yml                Scan JavaScript with CodeQL on PR/push/schedule/manual runs
   deploy.yml               Build previews + deploy site/ from main to Pages

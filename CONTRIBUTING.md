@@ -1,12 +1,12 @@
 # Contributing a template
 
-Templates are self-contained folders under `templates/<name>/`. Adding one is a
-folder plus a manifest — the generator and the site catalog pick it up
-automatically.
+Templates are self-contained folders under `templates/<name>/`. Add the folder,
+its manifest, and a gallery thumbnail; the generator and site catalog discover
+the result automatically.
 
 ## Anatomy of a template
 
-```
+```text
 templates/<name>/
   template.json                 Manifest (required — see below)
   .github/workflows/deploy.yml  Pages deploy workflow (required)
@@ -16,8 +16,8 @@ templates/<name>/
   .gitignore                    What the user's repo should ignore (recommended)
 ```
 
-`template.json`, `node_modules`, `dist`, `_site`, and `.git` are **never** copied
-into a stamped site (the generator excludes them).
+`template.json`, a registry-only `spec.md`, `node_modules`, `dist`, `_site`, and
+`.git` are **never** copied into a stamped site (the generator excludes them).
 
 ## The manifest (`template.json`)
 
@@ -30,18 +30,25 @@ into a stamped site (the generator excludes them).
   "framework": "Svelte",              // human-readable
   "tier": "ssg",                      // static | ssg | spa | data | native
   "language": "JavaScript",
+  "thumbnail": "assets/thumbnails/my-template.png",
   "needsBuild": true,                 // false for zero-build static
   "build": "vite build",              // build command, or null
   "output": "dist",                   // build output dir, or "." for static
   "basePathMechanism": "base in svelte.config.js",
   "deploy": "configure-pages + upload-pages-artifact + deploy-pages",
   "tags": ["svelte", "ssg"],
+  "features": ["Light/dark toggle", "GitHub source link"],
   "order": 6                          // catalog sort order
 }
 ```
 
 `output` must name a POSIX-style relative directory inside the stamped template. Absolute,
 traversing, file, and symbolic-link outputs are rejected before publication.
+
+Every template needs a 1024 by 1024 PNG thumbnail at
+`site/assets/thumbnails/<name>.png`. Use the shared Azure GPT Image 2 process
+documented in `docs/thumbnail-prompts.md`, and add the exact prompt to
+`scripts/thumbnail-prompts.json`.
 
 After editing manifests, regenerate the committed catalog:
 
@@ -71,13 +78,20 @@ sites, where the base collapses to `/`):
 If the framework needs no base path (all relative links), you don't need
 `__BASE_PATH__` at all — see `static-html`.
 
+For VitePress, set `base` to `__BASE_PATH__`. Use VitePress-aware Markdown links
+for pages and public assets, and verify both `/` and a nested project base.
+
 ## The deploy workflow
 
 Use the official **GitHub Actions** Pages flow (Source = "GitHub Actions"):
 
-```
+```text
 actions/configure-pages@v6 → build → actions/upload-pages-artifact@v5 → actions/deploy-pages@v5
 ```
+
+Use current supported action releases. New templates should pin every action to
+its full commit SHA. The creation skill normalizes known legacy action tags to
+reviewed immutable pins before applying a template.
 
 Every `deploy.yml` MUST declare:
 
@@ -99,7 +113,7 @@ Every `deploy.yml` MUST declare:
 
 ```sh
 npm test                                   # validate.mjs: manifests + workflows + stamp + catalog sync
-npm run build                              # build all six previews; requires Node 24 and Ruby 4
+npm run build                              # build all seven previews; requires Node 24 and Ruby 4
 node scripts/new-site.mjs my-template --repo octocat/demo --dir /tmp/x
 cd /tmp/x && npm ci --ignore-scripts && npm run build  # if it builds
 ```

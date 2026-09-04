@@ -6,6 +6,7 @@
   "framework": "React",
   "tier": "spa",
   "language": "JavaScript",
+  "thumbnail": "assets/thumbnails/react-vite.png",
   "needsBuild": true,
   "build": "vite build",
   "output": "dist",

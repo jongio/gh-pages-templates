@@ -5,9 +5,10 @@
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <meta
       name="description"
-      content="Browse GitHub Pages starter templates — static, Astro, React, Eleventy, and Jekyll — each with the deploy workflow and base path wired. Live previews included."
+      content="Browse GitHub Pages starter templates for specifications, static sites, content, and apps. Each includes a deploy workflow, correct base path, and live preview."
     />
     <title>GitHub Pages Templates</title>
+    <link rel="icon" type="image/svg+xml" href="./favicon.svg" />
     <!-- No-flash theme: set data-theme before first paint. -->
     <script>
       (function () {
@@ -19,7 +20,7 @@
       })();
     </script>
     <!-- Relative links — the site itself is base-path-proof. -->
-    <link rel="stylesheet" href="./assets/styles.css" />
+    <link rel="stylesheet" href="./assets/styles.css?v=2" />
   </head>
   <body>
     <header class="topbar">
@@ -154,7 +155,8 @@ npx skills add jongio/skills --skill create-gh-pages-site</code></pre>
           <code>templates/&lt;name&gt;/</code> containing:
         </p>
         <ul>
-          <li>a <code>template.json</code> manifest (title, tier, framework, base-path mechanism, tags);</li>
+          <li>a <code>template.json</code> manifest (title, tier, framework, thumbnail, base-path mechanism, tags);</li>
+          <li>a 1024 by 1024 PNG at <code>site/assets/thumbnails/&lt;name&gt;.png</code> with prompt provenance;</li>
           <li>a <code>.github/workflows/deploy.yml</code> using the official GitHub Pages actions;</li>
           <li>base-path handling via the <code>__BASE_PATH__</code> / <code>__BASE_URL__</code> sentinels;</li>
           <li>a short <code>README.md</code>.</li>

@@ -28,7 +28,7 @@ npm run preview  # serve the production build at the configured base
 
 ## Deploy
 
-1. Push to a GitHub repo's `main` branch.
+1. Push to the repository's `__DEFAULT_BRANCH__` branch.
 2. **Settings → Pages → Source → GitHub Actions**.
 3. `.github/workflows/deploy.yml` installs, builds, and publishes on every push.
 
@@ -36,7 +36,7 @@ npm run preview  # serve the production build at the configured base
 
 ## Structure
 
-```
+```text
 vite.config.js       base path for GitHub Pages
 index.html           Vite entry HTML
 copy-404.mjs         postbuild SPA fallback (dist/index.html → dist/404.html)

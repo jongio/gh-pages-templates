@@ -6,6 +6,7 @@
   "framework": "None",
   "tier": "static",
   "language": "HTML",
+  "thumbnail": "assets/thumbnails/static-html.png",
   "needsBuild": false,
   "build": null,
   "output": ".",

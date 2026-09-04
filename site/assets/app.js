@@ -10,6 +10,8 @@ const SKILL_PROMPT = {
   "react-vite": "a React (Vite) app",
   "eleventy": "an Eleventy site",
   "jekyll": "a Jekyll site",
+  "skills-catalog": "a catalog of Copilot skills",
+  "spectator": "a reviewable specification site",
 };
 const promptFor = (t) => `/create-gh-pages-site ${SKILL_PROMPT[t.name] || `a ${t.framework} site`}`;
 
@@ -57,6 +59,14 @@ function cmdRow(text) {
 }
 
 function card(t) {
+  const thumbnail = el("img", {
+    class: "template-thumb",
+    src: `./${t.thumbnail}`,
+    alt: `${t.title} template thumbnail`,
+    loading: "lazy",
+    width: "1024",
+    height: "1024",
+  });
   const head = el("div", { class: "card-head" },
     el("h3", { text: t.title }),
     el("span", { class: `badge badge-${t.tier}`, text: TIER_LABEL[t.tier] || t.tier }),
@@ -84,6 +94,7 @@ function card(t) {
   );
 
   return el("article", { class: "card", "data-template": t.name },
+    thumbnail,
     head,
     el("p", { class: "tagline", text: t.tagline }),
     el("p", { class: "desc", text: t.description }),
@@ -128,6 +139,7 @@ const WIZARD = [
   {
     q: "What are you building?",
     a: [
+      { label: "A specification, RFC, or technical proposal", pick: "spectator" },
       { label: "An interactive app or dashboard", pick: "react-vite" },
       { label: "A content site, blog, or docs", next: 1 },
       { label: "Just a few simple pages", pick: "static-html" },

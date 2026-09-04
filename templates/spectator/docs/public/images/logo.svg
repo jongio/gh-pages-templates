@@ -1,0 +1,5 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" role="img" aria-label="Replace with the site logo">
+  <rect width="64" height="64" rx="12" fill="#e6fffb"/>
+  <path d="M17 14h23l8 8v28H17z" fill="#ffffff" stroke="#0f766e" stroke-width="3"/>
+  <path d="M40 14v9h9M24 31h17M24 39h13" fill="none" stroke="#0f766e" stroke-width="3" stroke-linecap="round"/>
+</svg>

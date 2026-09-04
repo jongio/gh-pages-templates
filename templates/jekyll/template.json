@@ -6,6 +6,7 @@
   "framework": "Jekyll",
   "tier": "native",
   "language": "Ruby",
+  "thumbnail": "assets/thumbnails/jekyll.png",
   "needsBuild": true,
   "build": "jekyll build",
   "output": "_site",

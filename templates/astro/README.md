@@ -27,15 +27,16 @@ npm run preview  # serve the production build
 
 ## Deploy
 
-1. Push to a GitHub repo's `main` branch.
+1. Push to the repository's `__DEFAULT_BRANCH__` branch.
 2. **Settings → Pages → Source → GitHub Actions**.
-3. `.github/workflows/deploy.yml` builds and publishes on every push to `main`.
+3. `.github/workflows/deploy.yml` builds and publishes on every push to
+   `__DEFAULT_BRANCH__`.
 
 > If you rename the repo, update `base` in `astro.config.mjs` to `/NEW-NAME/`.
 
 ## Structure
 
-```
+```text
 astro.config.mjs           site + base for GitHub Pages
 src/
   pages/                   file-based routes (index.astro, about.astro)

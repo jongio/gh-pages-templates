@@ -125,7 +125,7 @@ function buildPreview(template, manifest) {
       const probe = run(BUNDLE, ["--version"], work);
       if (probe.status !== 0) {
         console.log(`  • ${name}: skipped (no Bundler/Ruby for the Jekyll preview)`);
-        return false;
+        return null;
       }
     }
 
@@ -183,7 +183,13 @@ function main() {
   mkdirSync(previewRoot, { recursive: true });
 
   console.log("Previews:");
-  const built = catalog.filter((t) => buildPreview(t.name, t)).map((t) => t.name);
+  const results = catalog.map((template) => ({
+    name: template.name,
+    result: buildPreview(template.name, template),
+  }));
+  const built = results.filter(({ result }) => result === true).map(({ name }) => name);
+  const skipped = results.filter(({ result }) => result === null).map(({ name }) => name);
+  const failed = results.filter(({ result }) => result === false).map(({ name }) => name);
 
   console.log(`\nsite/preview ready — ${built.length}/${catalog.length} live previews: ${built.join(", ") || "(none)"}`);
   assertAllPreviewsBuilt(built, catalog);

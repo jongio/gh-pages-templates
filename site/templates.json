@@ -7,6 +7,7 @@
     "framework": "None",
     "tier": "static",
     "language": "HTML",
+    "thumbnail": "assets/thumbnails/static-html.png",
     "needsBuild": false,
     "build": null,
     "output": ".",
@@ -35,6 +36,7 @@
     "framework": "Astro",
     "tier": "ssg",
     "language": "JavaScript",
+    "thumbnail": "assets/thumbnails/astro.png",
     "needsBuild": true,
     "build": "astro build",
     "output": "dist",
@@ -64,6 +66,7 @@
     "framework": "React",
     "tier": "spa",
     "language": "JavaScript",
+    "thumbnail": "assets/thumbnails/react-vite.png",
     "needsBuild": true,
     "build": "vite build",
     "output": "dist",
@@ -93,6 +96,7 @@
     "framework": "Eleventy",
     "tier": "data",
     "language": "JavaScript",
+    "thumbnail": "assets/thumbnails/eleventy.png",
     "needsBuild": true,
     "build": "eleventy",
     "output": "_site",
@@ -123,6 +127,7 @@
     "framework": "Jekyll",
     "tier": "native",
     "language": "Ruby",
+    "thumbnail": "assets/thumbnails/jekyll.png",
     "needsBuild": true,
     "build": "jekyll build",
     "output": "_site",
@@ -153,6 +158,7 @@
     "framework": "Astro",
     "tier": "ssg",
     "language": "TypeScript",
+    "thumbnail": "assets/thumbnails/skills-catalog.png",
     "needsBuild": true,
     "build": "astro build",
     "output": "dist",
@@ -176,5 +182,37 @@
       "SHA-pinned Pages workflow"
     ],
     "order": 6
+  },
+  {
+    "name": "spectator",
+    "title": "Spectator",
+    "tagline": "Publish specifications built for review.",
+    "description": "A VitePress specification site with flexible content, local search, plain-language notes, GitHub issue feedback for pages and selected text, and direct edit links.",
+    "framework": "VitePress",
+    "tier": "ssg",
+    "language": "TypeScript",
+    "thumbnail": "assets/thumbnails/spectator.png",
+    "needsBuild": true,
+    "build": "vitepress build docs",
+    "output": "docs/.vitepress/dist",
+    "basePathMechanism": "base in VitePress config with base-aware links and assets",
+    "deploy": "configure-pages + upload-pages-artifact + deploy-pages",
+    "tags": [
+      "vitepress",
+      "specification",
+      "docs",
+      "review",
+      "feedback"
+    ],
+    "features": [
+      "Free-form specification content",
+      "Local search and page outlines",
+      "Light and dark themes",
+      "Page and selected-text GitHub feedback",
+      "Direct GitHub edit links",
+      "Plain-language callouts",
+      "Content integrity checks"
+    ],
+    "order": 7
   }
 ]

@@ -1,0 +1,120 @@
+:root {
+  --vp-c-brand-1: #0f766e;
+  --vp-c-brand-2: #0d665f;
+  --vp-c-brand-3: #0a554f;
+  --vp-c-brand-soft: rgba(15, 118, 110, 0.14);
+  --spectator-note-accent: #0f766e;
+  --spectator-note-bg: #effcf9;
+  --spectator-note-border: #9ddbd3;
+  --spectator-note-badge: #ccfbf1;
+  --spectator-note-label: #0a554f;
+}
+
+.dark {
+  --vp-c-brand-1: #5eead4;
+  --vp-c-brand-2: #4fd1c5;
+  --vp-c-brand-3: #2dd4bf;
+  --vp-c-brand-soft: rgba(45, 212, 191, 0.16);
+  --spectator-note-accent: #5eead4;
+  --spectator-note-bg: #102624;
+  --spectator-note-border: #28514c;
+  --spectator-note-badge: #173a36;
+  --spectator-note-label: #99f6e4;
+}
+
+.plain-language {
+  float: right;
+  clear: right;
+  width: 280px;
+  max-width: 42%;
+  margin: 4px 0 14px 26px;
+  padding: 12px 14px 8px;
+  border: 1px solid var(--spectator-note-border);
+  border-radius: 10px;
+  background: var(--spectator-note-bg);
+  box-shadow: 0 1px 2px rgba(15, 23, 42, 0.05);
+  font-size: 14px;
+}
+
+.vp-doc h2,
+.vp-doc div[class*="language-"] {
+  clear: right;
+}
+
+.plain-language__head {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+}
+
+.plain-language__icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 22px;
+  height: 22px;
+  flex: none;
+  border-radius: 6px;
+  background: var(--spectator-note-badge);
+  color: var(--spectator-note-accent);
+  font-family: var(--vp-font-family-mono);
+  font-weight: 800;
+}
+
+.plain-language__label {
+  color: var(--spectator-note-label);
+  font-family: var(--vp-font-family-mono);
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.plain-language__term {
+  display: block;
+  margin: 8px 0 2px;
+  color: var(--vp-c-text-1);
+  font-size: 15px;
+  font-weight: 700;
+}
+
+.plain-language__body {
+  color: var(--vp-c-text-2);
+}
+
+.plain-language__body > :first-child {
+  margin-top: 6px;
+}
+
+.plain-language__body > :last-child {
+  margin-bottom: 0;
+}
+
+.vp-doc img[alt^="Spectator illustration:"] {
+  display: block;
+  width: 100%;
+  max-width: 440px;
+  margin: 10px auto 28px;
+  border-radius: 12px;
+}
+
+.vp-doc table {
+  display: table;
+  width: 100%;
+}
+
+@media (max-width: 900px) {
+  .plain-language {
+    float: none;
+    width: auto;
+    max-width: none;
+    margin: 16px 0;
+  }
+}
+
+@media (max-width: 640px) {
+  .vp-doc table {
+    display: block;
+    overflow-x: auto;
+  }
+}
