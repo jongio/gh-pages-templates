@@ -1,11 +1,11 @@
 # Spectator template specification
 
-Status: Reviewed, implementation-ready
+Status: Implemented
 
 Reference implementation: `coreai-microsoft/eval-authoring-guide` at commit
 `eeca9bd320f3bd6dd520257ee86d46076b9ef476`
 
-Template registry: `jongio/gh-pages-templates` at commit
+Original template registry baseline: `jongio/gh-pages-templates` at commit
 `6dfb2e8152d140ed0c924fd49ba8b1ba4764d76b`
 
 ## 1. Executive summary
@@ -700,7 +700,7 @@ Default sentinel-backed values:
 | `repo` | `__REPO_SLUG__` |
 | VitePress `base` | `__BASE_PATH__` |
 | canonical site URL | `__SITE_URL__` |
-| `branch` | `main` |
+| `branch` | `__DEFAULT_BRANCH__` |
 | `contentRoot` | `docs` |
 | feedback label | `feedback` |
 | selection limit | `1500` |
@@ -757,7 +757,7 @@ Rules:
 
 The template ships `.github/workflows/deploy.yml` with:
 
-- triggers for pushes to `main` and manual dispatch;
+- triggers for pushes to the configured default branch and manual dispatch;
 - `contents: read`, `pages: write`, and `id-token: write`;
 - one Pages concurrency group with `cancel-in-progress: false`;
 - Node 24;
@@ -788,10 +788,11 @@ and pull requests after the reviewer follows an explicit link.
   "name": "spectator",
   "title": "Spectator",
   "tagline": "Publish specifications built for review.",
-  "description": "A VitePress specification site with curated navigation, local search, plain-language notes, GitHub issue feedback for pages and selected text, and direct edit links.",
+  "description": "A VitePress specification site with flexible content, local search, plain-language notes, GitHub issue feedback for pages and selected text, and direct edit links.",
   "framework": "VitePress",
   "tier": "ssg",
   "language": "TypeScript",
+  "thumbnail": "assets/thumbnails/spectator.png",
   "needsBuild": true,
   "build": "vitepress build docs",
   "output": "docs/.vitepress/dist",
@@ -799,7 +800,7 @@ and pull requests after the reviewer follows an explicit link.
   "deploy": "configure-pages + upload-pages-artifact + deploy-pages",
   "tags": ["vitepress", "specification", "docs", "review", "feedback"],
   "features": [
-    "Curated specification navigation",
+    "Free-form specification content",
     "Local search and page outlines",
     "Light and dark themes",
     "Page and selected-text GitHub feedback",
@@ -807,24 +808,21 @@ and pull requests after the reviewer follows an explicit link.
     "Plain-language callouts",
     "Content integrity checks"
   ],
-  "order": 6
+  "order": 7
 }
 ```
 
-### 14.2 Registry changes required with implementation
+### 14.2 Implemented registry changes
 
-1. Add the complete `templates/spectator/` template.
-2. Update `scripts/new-site.mjs` so `spec.md` is not copied, or relocate this
-   development specification before release.
-3. Add `spectator` to `PER_TEMPLATE_ACTIONS` in `scripts/validate.mjs`.
-4. Add validation that every buildable template's output path exists after its
-   preview build.
-5. Regenerate `site/templates.json`.
-6. Build the gallery preview at `site/preview/spectator/`.
-7. Update the registry README template table.
-8. Update contributing documentation with VitePress base-path guidance.
-9. Reconcile the registry's documented Pages action majors with the installed
-   creation skill's current action contract.
+1. The complete template lives at `templates/spectator/`.
+2. `scripts/new-site.mjs` excludes registry-only `spec.md` files.
+3. Registry validation covers Spectator actions, dependencies, output, catalog
+   metadata, and its generated 1024 by 1024 thumbnail.
+4. `site/templates.json` includes Spectator and its gallery thumbnail.
+5. `scripts/build-site.mjs` builds the Spectator live preview.
+6. The README and contributing guide document Spectator, VitePress base paths,
+   and thumbnail generation.
+7. The creation skill selects Spectator for reviewable specification requests.
 
 ## 15. `create-gh-pages-site` integration
 
@@ -1117,17 +1115,17 @@ The specification follows these established repository contracts:
 1. A template is a self-contained folder with `template.json`, a Pages workflow,
    README, and site files
    (`gh-pages-templates/CONTRIBUTING.md:7-19`).
-2. The manifest supplies catalog metadata, build command, output directory,
-   base-path mechanism, tags, features, and order
+2. The manifest supplies catalog metadata, thumbnail, build command, output
+   directory, base-path mechanism, tags, features, and order
    (`gh-pages-templates/scripts/validate.mjs:18-20`).
 3. Existing sentinels are replaced in one pass and must not remain in stamped
    output (`gh-pages-templates/scripts/new-site.mjs:33-39`, `121-168`).
 4. The registry catalog and live previews are derived from manifests
    (`gh-pages-templates/scripts/build-catalog.mjs:16-31`,
    `scripts/build-site.mjs:55-126`).
-5. Existing JavaScript templates use npm, and the gallery preview builder runs
-   `npm install` followed by `npm run build`
-   (`gh-pages-templates/scripts/build-site.mjs:87-93`).
+5. Existing JavaScript templates use locked npm dependency graphs, and the
+   gallery preview builder runs `npm ci --ignore-scripts` followed by
+   `npm run build`.
 6. The reference site extends VitePress's default theme instead of replacing the
    reading shell (`eval-authoring-guide/docs/.vitepress/theme/index.ts:10-17`).
 7. Browser and selection APIs remain inside lifecycle-driven Vue code so static

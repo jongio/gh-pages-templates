@@ -1,8 +1,8 @@
 # Contributing a template
 
-Templates are self-contained folders under `templates/<name>/`. Adding one is a
-folder plus a manifest — the generator and the site catalog pick it up
-automatically.
+Templates are self-contained folders under `templates/<name>/`. Add the folder,
+its manifest, and a gallery thumbnail; the generator and site catalog discover
+the result automatically.
 
 ## Anatomy of a template
 

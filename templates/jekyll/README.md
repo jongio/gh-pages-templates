@@ -27,7 +27,7 @@ bundle exec jekyll serve   # http://localhost:4000
 
 ## Deploy
 
-1. Push to a GitHub repo's `main` branch.
+1. Push to the repository's `__DEFAULT_BRANCH__` branch.
 2. **Settings → Pages → Source → GitHub Actions**.
 3. `.github/workflows/deploy.yml` builds with Jekyll and publishes on every push.
 

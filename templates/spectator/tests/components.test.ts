@@ -81,7 +81,7 @@ describe("review components", () => {
     expect(wrapper.get('[role="toolbar"]').isVisible()).toBe(true);
     expect(wrapper.get("button").text()).toContain("Create issue");
     expect(wrapper.get("a").attributes("href")).toContain(
-      "/edit/main/docs/proposal.md",
+      "/edit/__DEFAULT_BRANCH__/docs/proposal.md",
     );
 
     document.dispatchEvent(new KeyboardEvent("keydown", { key: "Escape" }));

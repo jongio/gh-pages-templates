@@ -34,7 +34,7 @@ export const spectatorConfig: SpectatorConfig = {
   siteUrl: "__SITE_URL__",
   basePath: "__BASE_PATH__",
   repo: "__REPO_SLUG__",
-  branch: "main",
+  branch: "__DEFAULT_BRANCH__",
   contentRoot: "docs",
   footerMessage: "A specification published for clear, durable review.",
   feedback: {

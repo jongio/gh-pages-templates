@@ -42,7 +42,7 @@ test("page feedback and edit links include the current page", async ({ page }) =
     page.getByRole("link", { name: "Edit this page on GitHub" }),
   ).toHaveAttribute(
     "href",
-    "https://github.com/octocat/demo-site/edit/main/docs/proposal.md",
+    "https://github.com/octocat/demo-site/edit/__DEFAULT_BRANCH__/docs/proposal.md",
   );
 });
 
@@ -56,7 +56,7 @@ test("selected article text exposes issue and edit actions", async ({ page }) =>
   await expect(toolbar).toBeVisible();
   await expect(toolbar.getByRole("link", { name: /Edit this page/ })).toHaveAttribute(
     "href",
-    "https://github.com/octocat/demo-site/edit/main/docs/proposal.md",
+    "https://github.com/octocat/demo-site/edit/__DEFAULT_BRANCH__/docs/proposal.md",
   );
 
   await page.evaluate(() => {

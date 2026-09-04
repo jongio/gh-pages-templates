@@ -7,6 +7,7 @@ const ALLOWED_BUILD_SCRIPTS = new Set([
   "eleventy",
   "node scripts/build-site.mjs",
   "vite build",
+  "vitepress build docs",
 ]);
 
 function displayPath(file) {

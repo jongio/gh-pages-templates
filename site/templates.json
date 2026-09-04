@@ -158,6 +158,7 @@
     "framework": "Astro",
     "tier": "ssg",
     "language": "TypeScript",
+    "thumbnail": "assets/thumbnails/skills-catalog.png",
     "needsBuild": true,
     "build": "astro build",
     "output": "dist",

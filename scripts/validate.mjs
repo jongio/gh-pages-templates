@@ -121,7 +121,7 @@ console.log("gh-pages-templates validation");
 
 const names = listTemplates();
 
-test("at least 6 templates present", () => assert.ok(names.length >= 6, `found ${names.length}`));
+test("at least 7 templates present", () => assert.ok(names.length >= 7, `found ${names.length}`));
 
 test("repository npm runtime and release policies are enforced", () => {
   const pkg = JSON.parse(readFileSync(join(ROOT, "package.json"), "utf8"));
@@ -901,6 +901,14 @@ test("thumbnail prompts and provenance cover every template", () => {
       `docs missing ${image.file} output`,
     );
   }
+});
+test("gallery shell renders thumbnails and declares a favicon", () => {
+  const index = readFileSync(join(ROOT, "site", "index.html"), "utf8");
+  const app = readFileSync(join(ROOT, "site", "assets", "app.js"), "utf8");
+  assert.ok(index.includes('href="./favicon.svg"'));
+  assert.ok(existsSync(join(ROOT, "site", "favicon.svg")));
+  assert.ok(app.includes('class: "template-thumb"'));
+  assert.ok(app.includes("t.thumbnail"));
 });
 test("site/templates.json is committed and in sync with the manifests", () => {
   const catalogFile = join(ROOT, "site", "templates.json");

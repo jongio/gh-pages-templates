@@ -28,10 +28,10 @@ npx serve .
 
 ## Deploy
 
-1. Push this folder to a GitHub repo's `main` branch.
+1. Push this folder to the repository's `__DEFAULT_BRANCH__` branch.
 2. In the repo, go to **Settings → Pages** and set **Source** to **GitHub Actions**.
 3. The included workflow (`.github/workflows/deploy.yml`) runs on every push to
-   `main` and publishes the site. The live URL appears in the Actions run summary
+   `__DEFAULT_BRANCH__` and publishes the site. The live URL appears in the Actions run summary
    and under Settings → Pages.
 
 ## Structure

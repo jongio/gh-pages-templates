@@ -10,6 +10,7 @@ const SKILL_PROMPT = {
   "react-vite": "a React (Vite) app",
   "eleventy": "an Eleventy site",
   "jekyll": "a Jekyll site",
+  "skills-catalog": "a catalog of Copilot skills",
   "spectator": "a reviewable specification site",
 };
 const promptFor = (t) => `/create-gh-pages-site ${SKILL_PROMPT[t.name] || `a ${t.framework} site`}`;

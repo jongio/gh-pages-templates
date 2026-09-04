@@ -33,7 +33,7 @@ PATH_PREFIX="/my-repo/" npm run build
 
 ## Deploy
 
-1. Push to a GitHub repo's `main` branch.
+1. Push to the repository's `__DEFAULT_BRANCH__` branch.
 2. **Settings → Pages → Source → GitHub Actions**.
 3. `.github/workflows/deploy.yml` builds with the right `PATH_PREFIX` and publishes.
 

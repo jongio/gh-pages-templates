@@ -7,6 +7,8 @@ Site URL: __SITE_URL__
 
 ## Develop locally
 
+Requires Node.js 24 or later and npm 11.10 or later.
+
 ```sh
 npm ci
 npm run dev
@@ -46,7 +48,7 @@ Replace the labeled assets in `docs/public/images/`. See
 
 ## Deploy
 
-1. Push to the repository's `main` branch.
+1. Push to the repository's `__DEFAULT_BRANCH__` branch.
 2. Set **Settings > Pages > Source** to **GitHub Actions**.
 3. The included workflow builds and publishes `docs/.vitepress/dist`.
 

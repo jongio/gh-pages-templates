@@ -125,9 +125,9 @@ npm run build   # clean build of all seven previews; requires Node 24 and Ruby 4
 ```
 
 Add a template by dropping a folder under `templates/<name>/` with a
-`template.json` manifest, a `.github/workflows/deploy.yml`, and base-path handling
-via the generator's sentinels — see [`CONTRIBUTING.md`](CONTRIBUTING.md). CI
-(`validate.yml`) gates every PR.
+`template.json` manifest, a gallery thumbnail, a `.github/workflows/deploy.yml`,
+and base-path handling via the generator's sentinels — see
+[`CONTRIBUTING.md`](CONTRIBUTING.md). CI (`validate.yml`) gates every PR.
 
 ## Layout
 
@@ -136,7 +136,10 @@ templates/<name>/          Registry source (with __SENTINEL__ placeholders)
   template.json            Manifest (site catalog + generator read this)
   .github/workflows/deploy.yml
 site/                      The site — committed source you edit + deploy
-  index.html  assets/      Browse UI (static, base-path-proof)
+  index.html               Browse UI (static, base-path-proof)
+  assets/
+    app.js  styles.css
+    thumbnails/            One generated 1024px PNG per template
   templates.json           Catalog (generated from manifests by build-catalog.mjs)
   preview/                 Live template previews (gitignored; built by build-site.mjs)
 scripts/
@@ -150,7 +153,6 @@ scripts/
   validate.mjs             CI gate (manifests, workflows, stamping, catalog, previews)
 docs/
   thumbnail-prompts.md     Generated thumbnail provenance and reproduction guide
-site/assets/thumbnails/    One 1024px PNG per template
 .github/workflows/
   codeql.yml                Scan JavaScript with CodeQL on PR/push/schedule/manual runs
   deploy.yml               Build previews + deploy site/ from main to Pages

@@ -39,6 +39,12 @@
       "prompt": "Use ruby red, deep navy, soft rose, charcoal, and GitHub green. Center an elegant GitHub-style repository window with a faceted ruby gemstone resting above a stack of abstract document pages. A clean red path passes through a Liquid-like droplet template shape and lands in a finished blog preview with image cards and a green Pages deployment check. Keep the gemstone and repository as the dominant objects. The concept must read as GitHub-native Markdown publishing. Do not place Markdown letters, alphabet characters, code symbols, or readable labels on any document."
     },
     {
+      "id": "skills-catalog",
+      "file": "skills-catalog.png",
+      "title": "Skills Catalog",
+      "prompt": "Use cobalt blue, teal green, warm amber, charcoal, and GitHub green. Center a large searchable marketplace browser as the hero surface. On the left, show one tidy agent-skill package entering through a dotted connector. Inside the browser, show a clean search control above a grid of six distinct skill cards with simple tool symbols and status badges. A small branch line connects one selected card to a polished detail panel on the right with an install-copy control and green completion check. The concept must read as reusable agent skills becoming an organized searchable catalog."
+    },
+    {
       "id": "spectator",
       "file": "spectator.png",
       "title": "Spectator",
