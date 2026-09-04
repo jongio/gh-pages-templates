@@ -26,8 +26,7 @@ describe("server rendering", () => {
   });
 
   it("renders selection actions without browser globals", async () => {
-    await expect(renderToString(h(SelectionActions))).resolves.toMatch(
-      /^<!--.*-->$/,
-    );
+    const html = await renderToString(h(SelectionActions));
+    expect(html.startsWith("<!--") && html.endsWith("-->")).toBe(true);
   });
 });
