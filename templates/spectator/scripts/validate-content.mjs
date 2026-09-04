@@ -38,6 +38,18 @@ function headingSlug(heading) {
   return /^\d/.test(slug) ? `_${slug}` : slug;
 }
 
+function headingSlugs(source) {
+  const counts = new Map();
+  const slugs = new Set();
+  for (const match of source.matchAll(/^#{1,6}\s+(.+?)\s*$/gm)) {
+    const base = headingSlug(match[1]);
+    const count = counts.get(base) || 0;
+    slugs.add(count === 0 ? base : `${base}-${count}`);
+    counts.set(base, count + 1);
+  }
+  return slugs;
+}
+
 function navigationLinks(configPath) {
   if (!existsSync(configPath)) return [];
   const source = readFileSync(configPath, "utf8");
@@ -72,14 +84,7 @@ export function inspectContent(root = DEFAULT_ROOT) {
     const route = routeFor(docsRoot, file);
     const source = readFileSync(file, "utf8");
     routes.set(route, file);
-    anchors.set(
-      route,
-      new Set(
-        [...source.matchAll(/^#{1,6}\s+(.+?)\s*$/gm)].map((match) =>
-          headingSlug(match[1]),
-        ),
-      ),
-    );
+    anchors.set(route, headingSlugs(source));
     for (const marker of source.matchAll(/__[A-Z][A-Z0-9_]*__/g)) {
       errors.push(`${relative(projectRoot, file)}: unresolved marker ${marker[0]}`);
     }

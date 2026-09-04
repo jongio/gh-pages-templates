@@ -72,4 +72,11 @@ describe("content validation", () => {
       ]),
     );
   });
+
+  it("accepts VitePress duplicate-heading suffixes", () => {
+    const files = validFixture();
+    files["docs/index.md"] =
+      "# Home\n\n## Repeat\n\nFirst.\n\n## Repeat\n\n[Second](/#repeat-1)\n";
+    expect(validateContent(fixture(files))).toMatchObject({ pages: 2 });
+  });
 });
