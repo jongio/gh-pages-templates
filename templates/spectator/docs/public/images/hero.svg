@@ -1,0 +1,20 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1280 640" role="img" aria-label="Replace with a diagram or product image for the specification">
+  <rect width="1280" height="640" rx="32" fill="#f4f7f7"/>
+  <g fill="none" stroke="#b7c9c7" stroke-width="2">
+    <path d="M0 80h1280M0 160h1280M0 240h1280M0 320h1280M0 400h1280M0 480h1280M0 560h1280"/>
+    <path d="M80 0v640M160 0v640M240 0v640M320 0v640M400 0v640M480 0v640M560 0v640M640 0v640M720 0v640M800 0v640M880 0v640M960 0v640M1040 0v640M1120 0v640M1200 0v640"/>
+  </g>
+  <g>
+    <rect x="125" y="165" width="250" height="310" rx="18" fill="#ffffff" stroke="#476a67" stroke-width="4"/>
+    <rect x="515" y="105" width="250" height="310" rx="18" fill="#ffffff" stroke="#476a67" stroke-width="4"/>
+    <rect x="905" y="165" width="250" height="310" rx="18" fill="#ffffff" stroke="#476a67" stroke-width="4"/>
+    <g stroke="#8aa5a2" stroke-width="10" stroke-linecap="round">
+      <path d="M180 235h140M180 285h115M570 175h140M570 225h115M960 235h140M960 285h115"/>
+    </g>
+    <path d="M375 320h115M765 320h115" fill="none" stroke="#0f766e" stroke-width="12" stroke-linecap="round"/>
+    <path d="m470 292 28 28-28 28M860 292l28 28-28 28" fill="none" stroke="#0f766e" stroke-width="12" stroke-linecap="round" stroke-linejoin="round"/>
+    <circle cx="640" cy="500" r="50" fill="#0f766e"/>
+    <path d="m615 500 18 18 34-42" fill="none" stroke="#ffffff" stroke-width="12" stroke-linecap="round" stroke-linejoin="round"/>
+  </g>
+  <text x="640" y="590" text-anchor="middle" font-family="system-ui, sans-serif" font-size="24" fill="#476a67">REPLACE WITH YOUR SPECIFICATION VISUAL</text>
+</svg>

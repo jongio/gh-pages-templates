@@ -20,6 +20,7 @@ project site (`/repo/`) with no fiddling.
 | `eleventy` | data/Markdown-driven sites | `pathPrefix` via env + `url` filter | `eleventy` |
 | `jekyll` | GitHub-native / existing Jekyll | `baseurl` in `_config.yml` | Jekyll |
 | `skills-catalog` | searchable agent skill marketplaces | `base` in `astro.config.mjs` | `astro build` |
+| `spectator` | reviewable specifications and technical proposals | VitePress `base` | `vitepress build` |
 
 All deploy via the GitHub Actions Pages source using the current first-party
 actions (`configure-pages@v6`, `upload-pages-artifact@v5`, and
@@ -117,7 +118,7 @@ This repo deploys its own site to GitHub Pages:
 
 ```sh
 npm test        # manifests, workflows, dependency policy, and generator checks
-npm run build   # clean build of all six previews; requires Node 24 and Ruby 4
+npm run build   # clean build of all seven previews; requires Node 24 and Ruby 4
 ```
 
 Add a template by dropping a folder under `templates/<name>/` with a

@@ -1,0 +1,5 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" role="img" aria-label="Spectator">
+  <rect width="64" height="64" rx="12" fill="#0f766e"/>
+  <path d="M18 17h22l7 7v23H18z" fill="#ffffff"/>
+  <path d="M40 17v8h8M25 31h15M25 38h15" fill="none" stroke="#0f766e" stroke-width="4" stroke-linecap="round"/>
+</svg>

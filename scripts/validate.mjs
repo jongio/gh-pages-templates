@@ -75,6 +75,7 @@ const PER_TEMPLATE_ACTIONS = {
   "react-vite": ["actions/setup-node@", "actions/configure-pages@", "actions/upload-pages-artifact@"],
   "eleventy": ["actions/setup-node@", "actions/configure-pages@", "actions/upload-pages-artifact@"],
   "jekyll": ["actions/configure-pages@", "actions/jekyll-build-pages@", "actions/upload-pages-artifact@"],
+  "spectator": ["actions/setup-node@", "actions/configure-pages@", "actions/upload-pages-artifact@"],
 };
 let passed = 0;
 function test(name, fn) {
@@ -776,6 +777,9 @@ try {
         readFileSync(join(dir, ".github", "workflows", "deploy.yml"), "utf8"),
         /branches:\s*\[trunk\]/,
       );
+      if (name === "spectator") {
+        assert.ok(!existsSync(join(dir, "spec.md")), "registry-only spec.md was copied");
+      }
     });
   }
 } finally {

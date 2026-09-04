@@ -39,7 +39,16 @@ const TEMPLATES_DIR = resolve(__dirname, "..", "templates");
 const TRUSTED_REGISTRY = "jongio/gh-pages-templates";
 
 // Files/dirs never copied into a stamped site.
-const SKIP_ENTRIES = new Set(["node_modules", "dist", "_site", ".git", ".cache", ".jekyll-cache", "template.json"]);
+const SKIP_ENTRIES = new Set([
+  "node_modules",
+  "dist",
+  "_site",
+  ".git",
+  ".cache",
+  ".jekyll-cache",
+  "template.json",
+  "spec.md",
+]);
 
 // Sentinels replaced during stamping. Replacement is a single pass over a
 // combined regex so an injected value (e.g. a --site-name that happens to

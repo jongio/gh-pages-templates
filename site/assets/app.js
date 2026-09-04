@@ -10,6 +10,7 @@ const SKILL_PROMPT = {
   "react-vite": "a React (Vite) app",
   "eleventy": "an Eleventy site",
   "jekyll": "a Jekyll site",
+  "spectator": "a reviewable specification site",
 };
 const promptFor = (t) => `/create-gh-pages-site ${SKILL_PROMPT[t.name] || `a ${t.framework} site`}`;
 
@@ -128,6 +129,7 @@ const WIZARD = [
   {
     q: "What are you building?",
     a: [
+      { label: "A specification, RFC, or technical proposal", pick: "spectator" },
       { label: "An interactive app or dashboard", pick: "react-vite" },
       { label: "A content site, blog, or docs", next: 1 },
       { label: "Just a few simple pages", pick: "static-html" },

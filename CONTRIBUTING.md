@@ -16,8 +16,8 @@ templates/<name>/
   .gitignore                    What the user's repo should ignore (recommended)
 ```
 
-`template.json`, `node_modules`, `dist`, `_site`, and `.git` are **never** copied
-into a stamped site (the generator excludes them).
+`template.json`, a registry-only `spec.md`, `node_modules`, `dist`, `_site`, and
+`.git` are **never** copied into a stamped site (the generator excludes them).
 
 ## The manifest (`template.json`)
 
@@ -71,6 +71,9 @@ sites, where the base collapses to `/`):
 If the framework needs no base path (all relative links), you don't need
 `__BASE_PATH__` at all — see `static-html`.
 
+For VitePress, set `base` to `__BASE_PATH__`. Use VitePress-aware Markdown links
+for pages and public assets, and verify both `/` and a nested project base.
+
 ## The deploy workflow
 
 Use the official **GitHub Actions** Pages flow (Source = "GitHub Actions"):
@@ -78,6 +81,8 @@ Use the official **GitHub Actions** Pages flow (Source = "GitHub Actions"):
 ```
 actions/configure-pages@v6 → build → actions/upload-pages-artifact@v5 → actions/deploy-pages@v5
 ```
+
+Use current supported action releases and pin every action to its full commit SHA.
 
 Every `deploy.yml` MUST declare:
 
@@ -99,7 +104,7 @@ Every `deploy.yml` MUST declare:
 
 ```sh
 npm test                                   # validate.mjs: manifests + workflows + stamp + catalog sync
-npm run build                              # build all six previews; requires Node 24 and Ruby 4
+npm run build                              # build all seven previews; requires Node 24 and Ruby 4
 node scripts/new-site.mjs my-template --repo octocat/demo --dir /tmp/x
 cd /tmp/x && npm ci --ignore-scripts && npm run build  # if it builds
 ```
