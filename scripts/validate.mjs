@@ -909,6 +909,10 @@ test("gallery shell renders thumbnails and declares a favicon", () => {
   assert.ok(existsSync(join(ROOT, "site", "favicon.svg")));
   assert.ok(app.includes('class: "template-thumb"'));
   assert.ok(app.includes("t.thumbnail"));
+  assert.ok(
+    readFileSync(join(ROOT, "site", "assets", "styles.css"), "utf8")
+      .includes("height: auto; aspect-ratio: 16 / 10"),
+  );
 });
 test("site/templates.json is committed and in sync with the manifests", () => {
   const catalogFile = join(ROOT, "site", "templates.json");
